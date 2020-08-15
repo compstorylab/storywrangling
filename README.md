@@ -1,6 +1,6 @@
-![api](resources/logo.png)
+![api](resources/storywrangler.png)
 
-# StoryWrangler API 
+# Storywrangler API 
 
 
 
