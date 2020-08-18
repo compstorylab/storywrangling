@@ -1,7 +1,7 @@
 
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 with open("requirements.txt") as f:
@@ -12,7 +12,7 @@ setup(
     version="1.0.0",
     description="API for the Storywrangler project",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     keywords="NLP twitter ngrams",
     url="https://gitlab.com/compstorylab/storywrangling",
     author="Thayer Alshaabi",
