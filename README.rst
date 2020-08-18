@@ -1,3 +1,8 @@
+
+##################
+Storywrangler API
+##################
+
 .. contents::
 
 
@@ -74,8 +79,6 @@ Python Module
 Additionally, we also provide a Python module here to query our MongoDB
 on Hydra.
 
-.. warning::
-
     If there is a large subset of :math:`n`-grams you would like from
     our database, please send us an email.
 
@@ -104,13 +107,12 @@ Argument                                          Description
 ------------------------------------------------  -----------------------------
 Name            Type      Default
 ==============  ========  ======================  =============================
-`ngram`         str       required                target (1-, 2-, or 3-gram)  
-`lang`          str       \_all                   target language (iso code)
+`ngram`         str       required                target 1-, 2-, or 3-gram  
+`lang`          str       "\_all"                 target language (iso code)
 `start_time`    datetime  datetime(2009, 1, 1)    starting date for the query
 `end_time`      datetime  last\_updated           ending date for the query
 ==============  ========  ======================  =============================
 
-.. note::
     See `supported\_languages.json <resources/supported_languages.json>`__
     for a list of all supported languages.
 
@@ -157,8 +159,8 @@ Argument                                          Description
 ------------------------------------------------  -------------------------------
 Name            Type      Default
 ==============  ========  ======================  ===============================
-`ngrams`        list      required                a list of (1-, 2-, or 3-grams)  
-`lang`          str       \_all                   target language (iso code)
+`ngrams`        list      required                a list of 1-, 2-, or 3-grams  
+`lang`          str       "\_all"                 target language (iso code)
 `database`      str       "1grams"                target database collection
 `start_time`    datetime  datetime(2009, 1, 1)    starting date for the query
 `end_time`      datetime  last\_updated           ending date for the query
@@ -178,8 +180,7 @@ Name            Type      Default
       end_time=datetime(2020, 1, 1),
     )
 
-.. note::
-    All :math:`n`-grams should be in one langauge and one database collection.
+All :math:`n`-grams should be in one langauge and one database collection.
 
 
 **Expected output**
@@ -213,7 +214,7 @@ Argument                                              Description
 ----------------------------------------------------  --------------------------------
 Name            Type          Default
 ==============  ============  ======================  ================================
-`ngrams`        list(tuples)  required                a list of ("ngram", "iso-code")  
+`ngrams`        list(tuples)  required                a list of ("n-gram", "iso-code")  
 `start_time`    datetime      datetime(2009, 1, 1)    starting date for the query
 `end_time`      datetime      last\_updated           ending date for the query
 ==============  ============  ======================  ================================
@@ -272,7 +273,7 @@ Argument                                          Description
 Name            Type      Default
 ==============  ========  ======================  ===============================
 `date`          datetime  required                target date 
-`lang`          str       \_all                   target language (iso code)
+`lang`          str       "\_all"                 target language (iso code)
 `database`      str       "1grams"                target database collection
 ==============  ========  ======================  ===============================
 
@@ -317,7 +318,7 @@ Argument                                              Description
 ----------------------------------------------------  --------------------------------
 Name            Type          Default
 ==============  ============  ======================  ================================
-`lang`          str           \_all                   target language (iso code)
+`lang`          str           "\_all"                 target language (iso code)
 `start_time`    datetime      datetime(2009, 1, 1)    starting date for the query
 `end_time`      datetime      last\_updated           ending date for the query
 ==============  ============  ======================  ================================
