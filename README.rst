@@ -199,7 +199,7 @@ A single Pandas dataframe (see `ngrams_array_example.tsv <tests/ngrams_array_exa
 Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`   
-``word``          requested n-gram  
+``ngram``          requested n-gram  
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
@@ -270,7 +270,7 @@ A single Pandas dataframe (see `ngrams_multilang_example.tsv <tests/ngrams_multi
 Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`   
-``word``          requested n-gram  
+``ngram``         requested n-gram  
 ``lang``          requested language
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
@@ -318,7 +318,7 @@ A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_examp
 ================  =============================================
 Argument          Description
 ================  =============================================
-``word``          requested n-gram  
+``ngram``         requested n-gram  
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
