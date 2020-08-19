@@ -313,7 +313,7 @@ Name            Type      Default
 
 **Expected output**
 
-A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_example.tsv>`__).
+A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_example.tsv.gz>`__).
 
 ================  =============================================
 Argument          Description

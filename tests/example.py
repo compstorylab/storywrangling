@@ -88,7 +88,7 @@ def main():
         lang="en",
         database="1grams"
     )
-    zipf_example.to_csv("tests/ngrams_zipf_example.tsv", sep='\t')
+    zipf_example.to_csv("tests/ngrams_zipf_example.tsv.gz", sep='\t')
 
     print(f"Total time elapsed: {time.time() - timeit:.2f} sec.")
 

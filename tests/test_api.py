@@ -186,23 +186,6 @@ class APITesting(unittest.TestCase):
             expected_df[self.ngrams_cols],
         )
 
-    def test_get_zipf_dist(self):
-        df = self.api.get_zipf_dist(
-            self.start,
-            lang=self.lang_example,
-            database="1grams"
-        )
-        expected_df = pd.read_csv(
-            "tests/ngrams_zipf_example.tsv",
-            header=0,
-            sep='\t',
-        ).set_index('ngram')
-
-        pd.testing.assert_frame_equal(
-            df[self.ngrams_cols],
-            expected_df[self.ngrams_cols],
-        )
-
 
 if __name__ == '__main__':
     unittest.main()
