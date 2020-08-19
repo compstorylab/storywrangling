@@ -118,8 +118,6 @@ class Query:
                 data[d][c] = i[db]
 
         df = pd.DataFrame.from_dict(data=data, orient="index")
-        df.index = pd.to_datetime(df.index)
-        df.index.name = word
         return df
 
     def query_ngrams_array(self, word_list, start_time=None, end_time=None):
@@ -181,7 +179,6 @@ class Query:
         df["count_no_rt"] = df["count"] - df["retweets"]
         df["rank_no_rt"] = df["count_no_rt"].rank(method="average", ascending=False)
         df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
-        df.index.name = lang
         return df
 
     def query_day(self, date):
@@ -195,17 +192,14 @@ class Query:
         """
         query = self.prepare_day_query(date)
         zipf = {}
-        for i, t in enumerate(
-                tqdm(
-                    self.database.find(query),
-                    desc="Retrieving ngrams",
-                    unit=""
-                )
+        for t in tqdm(
+            self.database.find(query),
+            desc="Retrieving ngrams",
+            unit=""
         ):
             zipf[t["word"]] = {}
             for c, db in zip(self.cols, self.db_cols):
                 zipf[t["word"]][c] = t[db]
 
         df = pd.DataFrame.from_dict(data=zipf, orient="index")
-        df.index.name = date
         return df

@@ -18,6 +18,8 @@ except ImportError:
 import logging
 import ujson
 import pickle
+import pandas as pd
+from tqdm import tqdm
 
 import resources
 from storywrangling.query import Query
@@ -66,6 +68,8 @@ class Storywrangler:
                 start_time=start_time,
                 end_time=end_time,
             )
+            df.index = pd.to_datetime(df.index)
+            df.index.name = 'time'
             return df
         else:
             logger.warning(f"Unsupported language: {lang}")
@@ -95,11 +99,8 @@ class Storywrangler:
                 end_time=end_time,
             )
 
-            df.index.name = (
-                f"{self.supported_languages.get(lang)}\n'{ngram}'"
-                if self.supported_languages.get(lang) is not None
-                else f"All\n'{ngram}'"
-            )
+            df.index.name = 'time'
+            df.index = pd.to_datetime(df.index)
             return df
 
         else:
@@ -129,11 +130,8 @@ class Storywrangler:
                 start_time=start_time,
                 end_time=end_time,
             )
-            df.index.name = (
-                f"{self.supported_languages.get(lang)}"
-                if self.supported_languages.get(lang) is not None
-                else f"All"
-            )
+            df['time'] = pd.to_datetime(df['time'])
+            df.set_index(['time', 'ngram'], inplace=True)
             return df
 
         else:
@@ -152,9 +150,11 @@ class Storywrangler:
         """
 
         ngrams = []
-        for i, (w, lang) in enumerate(ngrams_list):
+        pbar = tqdm(ngrams_list, desc='Retrieving', leave=True, unit="")
+
+        for w, lang in pbar:
             n = len(nparser(w, parser=self.parser, n=1))
-            logging.info(f"Retrieving {self.supported_languages.get(lang)}: {n}gram -- '{w}'")
+            pbar.set_description(f"Retrieving: ({self.supported_languages.get(lang)}) {w.rstrip()}")
 
             q = Query(f"{n}grams", lang)
             df = q.query_ngram(
@@ -163,14 +163,17 @@ class Storywrangler:
                 end_time=end_time,
             )
 
-            df.index.name = (
-                f"{self.supported_languages.get(lang)}\n'{w}'"
-                if self.supported_languages.get(lang) is not None
-                else f"All\n'{w}'"
-            )
+            df["ngram"] = w
+            df["lang"] = self.supported_languages.get(lang) \
+                if self.supported_languages.get(lang) is not None else "All"
 
+            df.index.name = 'time'
+            df.index = pd.to_datetime(df.index)
+            df.set_index([df.index, 'ngram', 'lang'], inplace=True)
             ngrams.append(df)
+            pbar.refresh()
 
+        ngrams = pd.concat(ngrams)
         return ngrams
 
     def get_zipf_dist(self, date, lang, database):
@@ -190,6 +193,7 @@ class Storywrangler:
 
             q = Query(database, lang)
             df = q.query_day(date)
+            df.index.name = 'ngram'
             return df
 
         else:
