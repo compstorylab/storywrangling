@@ -96,8 +96,9 @@ class Query:
         }
         return query, self.prepare_data(query, self.lang_cols)
 
-    def prepare_day_query(self, date=None):
-        return {"time": date if date else self.last_updated}
+    def prepare_day_query(self, date=None, max_n=None):
+        if max_n: return {"time": date if date else self.last_updated, "rank": {"$lte": max_n}}
+        else: return {"time": date if date else self.last_updated}
 
     def query_ngram(self, word, start_time=None, end_time=None):
         """Query database for n-gram timeseries
@@ -181,16 +182,17 @@ class Query:
         df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
         return df
 
-    def query_day(self, date):
+    def query_day(self, date, max_n=None):
         """Query database for all ngrams in a single day
 
         Args:
             date (datetime): target date
+            max_n (int or None): Maximum number of ngrams to return (optional, default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
-        query = self.prepare_day_query(date)
+        query = self.prepare_day_query(date, max_n)
         zipf = {}
         for t in tqdm(
             self.database.find(query),

@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 import resources
 from storywrangling.query import Query
-from storywrangling.regexr import nparser
+from storywrangling.regexr import nparser, remove_whitespaces, ngram_parser
 
 
 logging.basicConfig(
@@ -45,6 +45,26 @@ class Storywrangler:
         self.supported_languages = ujson.load(
             pkg_resources.open_binary(resources, 'supported_languages.json')
         )
+        self.indexed_languages = ujson.load(
+            pkg_resources.open_binary(resources, 'indexed_languages.json')
+        )
+
+    def check_if_indexed(self,language,n):
+        """Returns the requested number, if supported, or 1, if requested is not supported
+        Args:
+            lang (string): target language (iso code)
+            n (int): number of ngrams requested
+
+        Returns (int):
+            number of ngrams to search, based on what is indexed
+
+        """
+        if language in self.indexed_languages[str(n)+'grams']:
+            logging.info(f"{language} {n}grams are indexed")
+            return n
+        else:
+            logging.info(f"{language} {n}grams are not indexed yet")
+            return 1
 
     def get_lang(self, lang, start_time=None, end_time=None):
         """Query database for language usage timeseries
@@ -74,7 +94,7 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngram(self, ngram, lang, start_time=None, end_time=None):
+    def get_ngram(self, ngram, lang, start_time=None, end_time=None, only_indexed=False):
         """Query database for an n-gram timeseries
 
         Args:
@@ -82,29 +102,49 @@ class Storywrangler:
             lang (string): target language (iso code)
             start_time (datetime): starting date for the query
             end_time (datetime): ending date for the query
+            only_indexed (bool): only search ngrams that are indexed; if true, return dfs for each 1gram, stacked on top of one another
 
         Returns (pd.DataFrame):
             dataframe of ngrams usage over time
         """
 
         n = len(nparser(ngram, parser=self.parser, n=1))
-        q = Query(f"{n}grams", lang)
+        if self.check_if_indexed(lang,n)!=n:
+            logger.warning(f"{n}grams not indexed for {lang}")
+            if (only_indexed==True):
+                q = Query(f"1grams", lang)
 
-        if self.supported_languages.get(lang) is not None:
-            logging.info(f"Retrieving {self.supported_languages.get(lang)}: {n}gram -- '{ngram}'")
-
-            df = q.query_ngram(
-                ngram,
-                start_time=start_time,
-                end_time=end_time,
-            )
-
-            df.index.name = 'time'
-            df.index = pd.to_datetime(df.index)
-            return df
+                if self.supported_languages.get(lang) is not None:
+                    ngrams = list(ngram_parser(remove_whitespaces(ngram), self.parser))
+                    df = q.query_ngrams_array(
+                        ngrams,
+                        start_time=start_time,
+                        end_time=end_time,
+                    )
+                    df['time'] = pd.to_datetime(df['time'])
+                    df.set_index(['time', 'ngram'], inplace=True)
+                    return df
+                else:
+                    logger.warning(f"Unsupported language: {lang}")
 
         else:
-            logger.warning(f"Unsupported language: {lang}")
+            q = Query(f"{n}grams", lang)
+
+            if self.supported_languages.get(lang) is not None:
+                logging.info(f"Retrieving {self.supported_languages.get(lang)}: {n}gram -- '{ngram}'")
+
+                df = q.query_ngram(
+                    ngram,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+
+                df.index.name = 'time'
+                df.index = pd.to_datetime(df.index)
+                return df
+
+            else:
+                logger.warning(f"Unsupported language: {lang}")
 
     def get_ngrams_array(self, ngrams_list, database, lang, start_time=None, end_time=None):
         """Query database for an array n-gram timeseries
@@ -176,7 +216,7 @@ class Storywrangler:
         ngrams = pd.concat(ngrams)
         return ngrams
 
-    def get_zipf_dist(self, date, lang, database):
+    def get_zipf_dist(self, date, lang, database, max_n=None):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -192,7 +232,7 @@ class Storywrangler:
             logger.info(f"Retrieving {self.supported_languages.get(lang)} {database} for {date.date()} ...")
 
             q = Query(database, lang)
-            df = q.query_day(date)
+            df = q.query_day(date, max_n=max_n)
             df.index.name = 'ngram'
             return df
 
