@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 import resources
 from storywrangling.query import Query
-from storywrangling.regexr import nparser, remove_whitespaces, ngram_parser
+from storywrangling.regexr import nparser
 
 
 logging.basicConfig(
@@ -109,13 +109,18 @@ class Storywrangler:
         """
 
         n = len(nparser(ngram, parser=self.parser, n=1))
-        if self.check_if_indexed(lang,n)!=n:
+
+        if self.check_if_indexed(lang, n) != n:
+
             logger.warning(f"{n}grams not indexed for {lang}")
-            if (only_indexed==True):
+
+            if only_indexed:
+
                 q = Query(f"1grams", lang)
 
                 if self.supported_languages.get(lang) is not None:
-                    ngrams = list(ngram_parser(remove_whitespaces(ngram), self.parser))
+                    ngrams = nparser(ngram, parser=self.parser, n=1)
+
                     df = q.query_ngrams_array(
                         ngrams,
                         start_time=start_time,
@@ -223,6 +228,7 @@ class Storywrangler:
             date (datetime): target date
             lang (string): target language (iso code)
             database (string): target ngram collection ("1grams", "2grams", "3grams")
+            max_n (int or None): Maximum number of ngrams to return (optional, default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams

@@ -124,6 +124,7 @@ class APITesting(unittest.TestCase):
             df[self.lang_cols],
             expected_df[self.lang_cols],
         )
+
     def test_get_ngram(self):
         df = self.api.get_ngram(
             self.ngram_example,
@@ -153,7 +154,7 @@ class APITesting(unittest.TestCase):
             end_time=self.end,
             only_indexed=True
         )
-        #df.to_pickle("tests/ngram_isindexed_example.pkl")
+
         expected_df = pd.read_pickle(
             "tests/ngram_isindexed_example.pkl"
         )
@@ -222,7 +223,7 @@ class APITesting(unittest.TestCase):
                 expected_df[self.ngrams_cols],
             )
 
-    """
+    @unittest.skip("Skip zipf_all")
     def test_get_zipf_1grams_all(self):
             df = self.api.get_zipf_dist(
                 self.end,
@@ -230,7 +231,7 @@ class APITesting(unittest.TestCase):
                 "1grams",
                 max_n=None
             )
-            #df.to_pickle("tests/zipf_1grams_all.pkl")
+
             expected_df = pd.read_pickle(
                 "tests/zipf_1grams_all.pkl",
             )
@@ -240,7 +241,7 @@ class APITesting(unittest.TestCase):
                 df[self.ngrams_cols],
                 expected_df[self.ngrams_cols],
             )
-    """
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -97,8 +97,10 @@ class Query:
         return query, self.prepare_data(query, self.lang_cols)
 
     def prepare_day_query(self, date=None, max_n=None):
-        if max_n: return {"time": date if date else self.last_updated, "rank": {"$lte": max_n}}
-        else: return {"time": date if date else self.last_updated}
+        if max_n:
+            return {"time": date if date else self.last_updated, "rank": {"$lte": max_n}}
+        else:
+            return {"time": date if date else self.last_updated}
 
     def query_ngram(self, word, start_time=None, end_time=None):
         """Query database for n-gram timeseries
