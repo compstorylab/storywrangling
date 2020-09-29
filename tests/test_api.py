@@ -211,13 +211,13 @@ class APITesting(unittest.TestCase):
             expected_df[self.ngrams_cols],
         )
 
-    @unittest.skip("Skip zipf_max1000")
+    @unittest.skip("Skip zipf_cutoff")
     def test_get_zipf_1grams_max1000(self):
             df = self.api.get_zipf_dist(
                 self.end,
                 self.lang_example,
                 "1grams",
-                max_n=1000
+                max_rank=1000
             )
             expected_df = pd.read_pickle(
                 "tests/zipf_1grams_max1000.pkl",
@@ -234,8 +234,7 @@ class APITesting(unittest.TestCase):
             df = self.api.get_zipf_dist(
                 self.end,
                 self.lang_example,
-                "1grams",
-                max_rank=None
+                "1grams"
             )
 
             expected_df = pd.read_pickle(
