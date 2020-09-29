@@ -1,6 +1,8 @@
 # Data
 data/
 logs/
+tests/*.pkl
+
 .idea/
 *.DS_Store
 

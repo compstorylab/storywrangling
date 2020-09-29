@@ -15,6 +15,8 @@ class APITesting(unittest.TestCase):
 
         self.lang_example = "en"
         self.ngram_example = "Black Lives Matter"
+        self.lang_isindexed_example = "fr"
+        self.ngram_isindexed_example = "bonjour mon ami"
         self.array_example = ["Higgs", "#AlphaGo", "CRISPR", "#AI", "LIGO"]
         self.multilang_example = [
             ('😊', '_all'),
@@ -126,9 +128,9 @@ class APITesting(unittest.TestCase):
     def test_get_ngram(self):
         df = self.api.get_ngram(
             self.ngram_example,
-            lang=self.lang_example,
+            self.lang_example,
             start_time=self.start,
-            end_time=self.end,
+            end_time=self.end
         )
         expected_df = pd.read_csv(
             "tests/ngram_example.tsv",
@@ -138,6 +140,29 @@ class APITesting(unittest.TestCase):
             sep='\t',
         )
         expected_df.index.name = 'time'
+
+        pd.testing.assert_frame_equal(
+            df[self.ngrams_cols],
+            expected_df[self.ngrams_cols],
+        )
+
+    def test_get_indexed_ngram(self):
+        df = self.api.get_ngram(
+            self.ngram_isindexed_example,
+            self.lang_isindexed_example,
+            start_time=self.start,
+            end_time=self.end,
+            only_indexed=True
+        )
+
+        expected_df = pd.read_csv(
+            "tests/ngrams_indexed_only_example.tsv",
+            parse_dates=True,
+            header=0,
+            sep='\t',
+        )
+        expected_df['time'] = pd.to_datetime(expected_df['time'])
+        expected_df.set_index(['time', 'ngram'], inplace=True)
 
         pd.testing.assert_frame_equal(
             df[self.ngrams_cols],
@@ -185,6 +210,42 @@ class APITesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+
+    @unittest.skip("Skip zipf_cutoff")
+    def test_get_zipf_1grams_max1000(self):
+            df = self.api.get_zipf_dist(
+                self.end,
+                self.lang_example,
+                "1grams",
+                max_rank=1000
+            )
+            expected_df = pd.read_pickle(
+                "tests/zipf_1grams_max1000.pkl",
+            )
+            expected_df.index.name = 'ngram'
+
+            pd.testing.assert_frame_equal(
+                df[self.ngrams_cols],
+                expected_df[self.ngrams_cols],
+            )
+
+    @unittest.skip("Skip zipf_all")
+    def test_get_zipf_1grams_all(self):
+            df = self.api.get_zipf_dist(
+                self.end,
+                self.lang_example,
+                "1grams"
+            )
+
+            expected_df = pd.read_pickle(
+                "tests/zipf_1grams_all.pkl",
+            )
+            expected_df.index.name = 'ngram'
+
+            pd.testing.assert_frame_equal(
+                df[self.ngrams_cols],
+                expected_df[self.ngrams_cols],
+            )
 
 
 if __name__ == '__main__':

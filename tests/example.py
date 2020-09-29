@@ -29,6 +29,16 @@ def main():
     )
     ngram.to_csv("tests/ngram_example.tsv", sep='\t')
 
+    # Getting indexed (searchable) n-grams only
+    ngram = storywrangler.get_ngram(
+        "bonjour mon ami",
+        lang="fr",
+        start_time=datetime(2010, 1, 1),
+        end_time=datetime(2020, 1, 1),
+        only_indexed=True
+    )
+    ngram.to_csv("tests/ngrams_indexed_only_example.tsv", sep='\t')
+
     # Getting a list of n-grams from one language
     ngrams = ["Higgs", "#AlphaGo", "CRISPR", "#AI", "LIGO"]
     array_example = storywrangler.get_ngrams_array(
@@ -80,6 +90,16 @@ def main():
         end_time=datetime(2020, 1, 1),
     )
     multilang_example.to_csv("tests/ngrams_multilang_example.tsv", sep='\t')
+
+
+    # Getting top k n-grams for a given day
+    zipf_example = storywrangler.get_zipf_dist(
+        date=datetime(2010, 1, 1),
+        lang="en",
+        database="1grams",
+        max_rank=1000
+    )
+    zipf_example.to_csv("tests/ngrams_zipf_topk_example.tsv.gz", sep='\t')
 
 
     # Getting all n-grams for a given day
