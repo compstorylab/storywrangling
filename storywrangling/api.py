@@ -119,7 +119,7 @@ class Storywrangler:
                 q = Query(f"1grams", lang)
 
                 if self.supported_languages.get(lang) is not None:
-                    ngrams = nparser(ngram, parser=self.parser, n=1)
+                    ngrams = list(nparser(ngram, parser=self.parser, n=1).keys())
 
                     df = q.query_ngrams_array(
                         ngrams,
@@ -221,14 +221,15 @@ class Storywrangler:
         ngrams = pd.concat(ngrams)
         return ngrams
 
-    def get_zipf_dist(self, date, lang, database, max_n=None):
+    def get_zipf_dist(self, date, lang, database, max_rank=None, min_count=None):
         """Query database for an array n-gram timeseries
 
         Args:
             date (datetime): target date
             lang (string): target language (iso code)
             database (string): target ngram collection ("1grams", "2grams", "3grams")
-            max_n (int or None): Maximum number of ngrams to return (optional, default is None)
+            max_rank (int): Max rank cutoff (default is None)
+            min_count (int): min count cutoff (default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
@@ -238,7 +239,7 @@ class Storywrangler:
             logger.info(f"Retrieving {self.supported_languages.get(lang)} {database} for {date.date()} ...")
 
             q = Query(database, lang)
-            df = q.query_day(date, max_n=max_n)
+            df = q.query_day(date, max_rank=max_rank, min_count=min_count)
             df.index.name = 'ngram'
             return df
 

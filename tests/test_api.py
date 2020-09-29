@@ -155,9 +155,14 @@ class APITesting(unittest.TestCase):
             only_indexed=True
         )
 
-        expected_df = pd.read_pickle(
-            "tests/ngram_isindexed_example.pkl"
+        expected_df = pd.read_csv(
+            "tests/ngrams_indexed_only_example.tsv",
+            parse_dates=True,
+            header=0,
+            sep='\t',
         )
+        expected_df['time'] = pd.to_datetime(expected_df['time'])
+        expected_df.set_index(['time', 'ngram'], inplace=True)
 
         pd.testing.assert_frame_equal(
             df[self.ngrams_cols],
@@ -206,6 +211,7 @@ class APITesting(unittest.TestCase):
             expected_df[self.ngrams_cols],
         )
 
+    @unittest.skip("Skip zipf_max1000")
     def test_get_zipf_1grams_max1000(self):
             df = self.api.get_zipf_dist(
                 self.end,
@@ -229,7 +235,7 @@ class APITesting(unittest.TestCase):
                 self.end,
                 self.lang_example,
                 "1grams",
-                max_n=None
+                max_rank=None
             )
 
             expected_df = pd.read_pickle(

@@ -96,9 +96,11 @@ class Query:
         }
         return query, self.prepare_data(query, self.lang_cols)
 
-    def prepare_day_query(self, date=None, max_n=None):
-        if max_n:
-            return {"time": date if date else self.last_updated, "rank": {"$lte": max_n}}
+    def prepare_day_query(self, date=None, max_rank=None, min_count=None):
+        if max_rank:
+            return {"time": date if date else self.last_updated, "rank": {"$lte": max_rank}}
+        elif min_count:
+            return {"time": date if date else self.last_updated, "count": {"$gte": min_count}}
         else:
             return {"time": date if date else self.last_updated}
 
@@ -184,17 +186,18 @@ class Query:
         df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
         return df
 
-    def query_day(self, date, max_n=None):
+    def query_day(self, date, max_rank=None, min_count=None):
         """Query database for all ngrams in a single day
 
         Args:
             date (datetime): target date
-            max_n (int or None): Maximum number of ngrams to return (optional, default is None)
+            max_rank (int): Max rank cutoff (default is None)
+            min_count (int): min count cutoff (default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
-        query = self.prepare_day_query(date, max_n)
+        query = self.prepare_day_query(date, max_rank, min_count)
         zipf = {}
         for t in tqdm(
             self.database.find(query),
@@ -206,4 +209,5 @@ class Query:
                 zipf[t["word"]][c] = t[db]
 
         df = pd.DataFrame.from_dict(data=zipf, orient="index")
+        df.sort_values(by='count', ascending=False, inplace=True)
         return df

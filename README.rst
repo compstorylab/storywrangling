@@ -297,6 +297,8 @@ Name            Type      Default
 ``date``        datetime  required                target date 
 ``lang``        str       "\_all"                 target language (iso code)
 ``database``    str       "1grams"                target database collection
+``max_rank``    int       None                    max rank cutoff (optional)
+``min_count``   int       None                    min count cutoff (optional)
 ==============  ========  ======================  ===============================
 
 
@@ -407,7 +409,7 @@ please see the following paper:
 
     Alshaabi, T., Dewhurst, D. R., Minot, J. R., Arnold, M. V., 
     Adams, J. L., Danforth, C. M., & Dodds, P. S. (2020). 
-    `The growing echo chamber of social media: 
+    `The growing amplification of social media: 
     Measuring temporal and social contagion dynamics 
     for over 150 languages on Twitter for 2009--2020
     <https://arxiv.org/abs/2003.03667>`__.
