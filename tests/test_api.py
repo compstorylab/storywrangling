@@ -85,6 +85,16 @@ class APITesting(unittest.TestCase):
             "unique_3grams_no_rt",
         ]
 
+        self.div_cols = [
+            "ngram",
+            "rd_contribution",
+            "rank_change",
+            "rd_contribution_noRT",
+            "rank_change_noRT",
+            "time_1",
+            "time_2"
+        ]
+    """
     def test_connection_languages(self):
         q = Query("languages", "languages")
         df = q.query_languages("en")
@@ -210,8 +220,8 @@ class APITesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
-
-    @unittest.skip("Skip zipf_cutoff")
+    """
+    #@unittest.skip("Skip zipf_cutoff")
     def test_get_zipf_1grams_max1000(self):
             df = self.api.get_zipf_dist(
                 self.end,
@@ -219,6 +229,8 @@ class APITesting(unittest.TestCase):
                 "1grams",
                 max_rank=1000
             )
+            #df.to_pickle('tests/zipf_1grams_max1000.pkl')
+
             expected_df = pd.read_pickle(
                 "tests/zipf_1grams_max1000.pkl",
             )
@@ -228,6 +240,7 @@ class APITesting(unittest.TestCase):
                 df[self.ngrams_cols],
                 expected_df[self.ngrams_cols],
             )
+            
 
     @unittest.skip("Skip zipf_all")
     def test_get_zipf_1grams_all(self):
@@ -247,6 +260,20 @@ class APITesting(unittest.TestCase):
                 expected_df[self.ngrams_cols],
             )
 
+    def test_get_divergence_max1000(self):
+        df = self.api.get_divergence(
+            self.end,
+            self.lang_example,
+            "1grams",
+            max_n=1000)
+        #df.to_pickle("tests/divergence_max1000.pkl")
+        expected_df = pd.read_pickle(
+            "tests/divergence_max1000.pkl")
+
+        pd.testing.assert_frame_equal(
+            df[self.div_cols],
+            expected_df[self.div_cols],
+        )
 
 if __name__ == '__main__':
     unittest.main()

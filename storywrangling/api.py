@@ -48,6 +48,9 @@ class Storywrangler:
         self.indexed_languages = ujson.load(
             pkg_resources.open_binary(resources, 'indexed_languages.json')
         )
+        self.divergence_languages = ujson.load(
+            pkg_resources.open_binary(resources, 'divergence_languages.json')
+        )
 
     def check_if_indexed(self,language,n):
         """Returns the requested number, if supported, or 1, if requested is not supported
@@ -240,6 +243,29 @@ class Storywrangler:
 
             q = Query(database, lang)
             df = q.query_day(date, max_rank=max_rank, min_count=min_count)
+            df.index.name = 'ngram'
+            return df
+
+        else:
+            logger.warning(f"Unsupported language: {lang}")
+
+    def get_divergence(self, date, lang, database, max_n=None):
+        """Query database for an array n-gram timeseries
+
+        Args:
+            date (datetime): target date
+            lang (string): target language (iso code)
+            database (string): target ngram collection ("1grams", "2grams")
+
+        Returns (pd.DataFrame):
+            dataframe of ngrams
+        """
+
+        if self.divergence_languages.get(lang) is not None:
+            logger.info(f"Retrieving {self.divergence_languages.get(lang)} {database} divergence ngrams for {date.date()} ...")
+
+            q = Query(("rd_"+database), lang)
+            df = q.query_divergence(date, max_n=max_n)
             df.index.name = 'ngram'
             return df
 
