@@ -66,7 +66,6 @@ class Query:
             "unique_3grams_no_rt",
         ]
         self.div_cols = [
-            "ngram",
             "rd_contribution",
             "rank_change",
             "rd_contribution_noRT",
@@ -84,10 +83,6 @@ class Query:
                 freq="D",
             ).date
         }
-
-    def prepare_divergence_query(self, date=None, max_n=None):
-        if max_n: return {"time_2": date if date else self.last_updated, "rank_change": {"$lte": max_n}}
-        else: return {"time_2": date if date else self.last_updated}
 
     def prepare_ngram_query(self, word, start=None, end=None):
         query = {
@@ -116,6 +111,12 @@ class Query:
             return {"time": date if date else self.last_updated, "count": {"$gte": min_count}}
         else:
             return {"time": date if date else self.last_updated}
+
+    def prepare_divergence_query(self, date=None, max_rank=None):
+        if max_rank:
+            return {"time_2": date if date else self.last_updated, "rank_change": {"$lte": max_rank}}
+        else:
+            return {"time_2": date if date else self.last_updated}
 
     def query_ngram(self, word, start_time=None, end_time=None):
         """Query database for n-gram timeseries
@@ -225,26 +226,27 @@ class Query:
         df.sort_values(by='count', ascending=False, inplace=True)
         return df
 
-    def query_divergence(self, date, max_n=None):
-                """Query database for all ngrams in a single day
+    def query_divergence(self, date, max_rank=None):
+        """Query database for all ngrams in a single day
 
-                Args:
-                    date (datetime): target date
-                    max_n (int or None): Maximum number of ngrams to return (optional, default is None)
+        Args:
+            date (datetime): target date
+            max_rank (int): Max rank cutoff (default is None)
 
-                Returns (pd.DataFrame):
-                    dataframe of ngrams
-                """
-                query = self.prepare_divergence_query(date, max_n)
-                div = {}
-                for t in tqdm(
-                    self.database.find(query),
-                    desc="Retrieving ngrams",
-                    unit=""
-                ):
-                    div[t["ngram"]] = {}
-                    for c in self.div_cols:
-                        div[t["ngram"]][c] = t[c]
+        Returns (pd.DataFrame):
+            dataframe of ngrams
+        """
+        query = self.prepare_divergence_query(date, max_rank)
+        div = {}
+        for t in tqdm(
+            self.database.find(query),
+            desc="Retrieving ngrams",
+            unit=""
+        ):
+            div[t["ngram"]] = {}
+            for c in self.div_cols:
+                div[t["ngram"]][c] = t[c]
 
-                df = pd.DataFrame.from_dict(data=div, orient="index")
-                return df
+        df = pd.DataFrame.from_dict(data=div, orient="index")
+        df.sort_values(by='rd_contribution', ascending=False, inplace=True)
+        return df

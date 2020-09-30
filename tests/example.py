@@ -110,11 +110,15 @@ def main():
     )
     zipf_example.to_csv("tests/ngrams_zipf_example.tsv.gz", sep='\t')
 
-    div_example = storywrangler.api.get_divergence(
+
+    # Getting rank divergence values for a given day
+    div_example = storywrangler.get_divergence(
           date=datetime(2010, 1, 1),
           lang="en",
-          database="1grams"
-          max_n=1000)
+          database="1grams",
+          max_rank=1000
+    )
+    div_example.to_csv("tests/ngrams_divergence_example.tsv.gz", sep='\t')
 
     print(f"Total time elapsed: {time.time() - timeit:.2f} sec.")
 

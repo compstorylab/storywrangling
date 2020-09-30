@@ -249,23 +249,26 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_divergence(self, date, lang, database, max_n=None):
+    def get_divergence(self, date, lang, database, max_rank=None):
         """Query database for an array n-gram timeseries
 
         Args:
             date (datetime): target date
             lang (string): target language (iso code)
             database (string): target ngram collection ("1grams", "2grams")
+            max_rank (int): Max rank cutoff (default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
 
         if self.divergence_languages.get(lang) is not None:
-            logger.info(f"Retrieving {self.divergence_languages.get(lang)} {database} divergence ngrams for {date.date()} ...")
+            logger.info(
+                f"Retrieving {self.divergence_languages.get(lang)} {database} divergence ngrams for {date.date()} ..."
+            )
 
             q = Query(("rd_"+database), lang)
-            df = q.query_divergence(date, max_n=max_n)
+            df = q.query_divergence(date, max_rank=max_rank)
             df.index.name = 'ngram'
             return df
 
