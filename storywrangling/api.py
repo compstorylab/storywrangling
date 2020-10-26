@@ -52,7 +52,7 @@ class Storywrangler:
             pkg_resources.open_binary(resources, 'divergence_languages.json')
         )
 
-    def check_if_indexed(self,language,n):
+    def check_if_indexed(self, language, n):
         """Returns the requested number, if supported, or 1, if requested is not supported
         Args:
             lang (string): target language (iso code)
@@ -69,7 +69,7 @@ class Storywrangler:
             logging.info(f"{language} {n}grams are not indexed yet")
             return 1
 
-    def get_lang(self, lang, start_time=None, end_time=None):
+    def get_lang(self, lang='_all', start_time=None, end_time=None):
         """Query database for language usage timeseries
 
         Args:
