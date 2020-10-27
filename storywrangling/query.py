@@ -65,11 +65,21 @@ class Query:
             "unique_2grams_no_rt",
             "unique_3grams_no_rt",
         ]
-        self.div_cols = [
+
+        self.db_div_cols = [
             "rd_contribution",
             "rank_change",
             "rd_contribution_noRT",
             "rank_change_noRT",
+            "time_1",
+            "time_2"
+        ]
+
+        self.div_cols = [
+            "rd_contribution",
+            "rank_change",
+            "rd_contribution__no_rt",
+            "rank_change_no_rt",
             "time_1",
             "time_2"
         ]
@@ -104,17 +114,47 @@ class Query:
         }
         return query, self.prepare_data(query, self.lang_cols)
 
-    def prepare_day_query(self, date=None, max_rank=None, min_count=None):
+    def prepare_day_query(self, date=None, max_rank=None, min_count=None, rt=True):
         if max_rank:
-            return {"time": date if date else self.last_updated, "rank": {"$lte": max_rank}}
+            if rt:
+                return {
+                    "time": date if date else self.last_updated,
+                    "rank": {"$lte": max_rank}
+                }
+            else:
+                return {
+                    "time": date if date else self.last_updated,
+                    "rank_no_rt": {"$lte": max_rank}
+                }
+
         elif min_count:
-            return {"time": date if date else self.last_updated, "count": {"$gte": min_count}}
+            if rt:
+                return {
+                    "time": date if date else self.last_updated,
+                    "count": {"$gte": min_count}
+                }
+            else:
+                return {
+                    "time": date if date else self.last_updated,
+                    "count_no_rt": {"$gte": min_count}
+                }
+
         else:
             return {"time": date if date else self.last_updated}
 
-    def prepare_divergence_query(self, date=None, max_rank=None):
+    def prepare_divergence_query(self, date=None, max_rank=None, rt=True):
         if max_rank:
-            return {"time_2": date if date else self.last_updated, "rank_change": {"$lte": max_rank}}
+            if rt:
+                return {
+                    "time_2": date if date else self.last_updated,
+                    "rank_change": {"$lte": max_rank, "$gte": -max_rank}
+                }
+            else:
+                return {
+                    "time_2": date if date else self.last_updated,
+                    "rank_change_noRT": {"$lte": max_rank, "$gte": -max_rank}
+                }
+
         else:
             return {"time_2": date if date else self.last_updated}
 
@@ -200,18 +240,19 @@ class Query:
         df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
         return df
 
-    def query_day(self, date, max_rank=None, min_count=None):
+    def query_day(self, date, max_rank=None, min_count=None, rt=True):
         """Query database for all ngrams in a single day
 
         Args:
             date (datetime): target date
             max_rank (int): Max rank cutoff (default is None)
             min_count (int): min count cutoff (default is None)
+            rt (bool): a toggle to include or exclude RTs
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
-        query = self.prepare_day_query(date, max_rank, min_count)
+        query = self.prepare_day_query(date, max_rank, min_count, rt)
         zipf = {}
         for t in tqdm(
             self.database.find(query),
@@ -223,20 +264,25 @@ class Query:
                 zipf[t["word"]][c] = t[db]
 
         df = pd.DataFrame.from_dict(data=zipf, orient="index")
-        df.sort_values(by='count', ascending=False, inplace=True)
+        if rt:
+            df.sort_values(by='count', ascending=False, inplace=True)
+        else:
+            df.sort_values(by='count_no_rt', ascending=False, inplace=True)
+
         return df
 
-    def query_divergence(self, date, max_rank=None):
+    def query_divergence(self, date, max_rank=None, rt=True):
         """Query database for all ngrams in a single day
 
         Args:
             date (datetime): target date
             max_rank (int): Max rank cutoff (default is None)
+            rt (bool): a toggle to include or exclude RTs
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
-        query = self.prepare_divergence_query(date, max_rank)
+        query = self.prepare_divergence_query(date, max_rank, rt)
         div = {}
         for t in tqdm(
             self.database.find(query),
@@ -244,9 +290,13 @@ class Query:
             unit=""
         ):
             div[t["ngram"]] = {}
-            for c in self.div_cols:
-                div[t["ngram"]][c] = t[c]
+            for c, db in zip(self.div_cols, self.db_div_cols):
+                div[t["ngram"]][c] = t[db]
 
         df = pd.DataFrame.from_dict(data=div, orient="index")
-        df.sort_values(by='rd_contribution', ascending=False, inplace=True)
+        if rt:
+            df.sort_values(by='rd_contribution', ascending=False, inplace=True)
+        else:
+            df.sort_values(by='rd_contribution_no_rt', ascending=False, inplace=True)
+
         return df

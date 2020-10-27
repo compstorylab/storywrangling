@@ -86,11 +86,10 @@ class APITesting(unittest.TestCase):
         ]
 
         self.div_cols = [
-            "ngram",
             "rd_contribution",
             "rank_change",
-            "rd_contribution_noRT",
-            "rank_change_noRT",
+            "rd_contribution__no_rt",
+            "rank_change_no_rt",
             "time_1",
             "time_2"
         ]

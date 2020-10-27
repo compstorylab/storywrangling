@@ -102,21 +102,23 @@ def main():
     zipf_example.to_csv("tests/ngrams_zipf_topk_example.tsv.gz", sep='\t')
 
 
-    # Getting all n-grams for a given day
+    # Getting all n-grams for a given day without RTs
     zipf_example = storywrangler.get_zipf_dist(
         date=datetime(2010, 1, 1),
         lang="en",
-        database="1grams"
+        database="1grams",
+        rt=False
     )
-    zipf_example.to_csv("tests/ngrams_zipf_example.tsv.gz", sep='\t')
+    zipf_example.to_csv("tests/ngrams_zipf_no_rt_example.tsv.gz", sep='\t')
 
 
-    # Getting rank divergence values for a given day
+    # Getting narratively dominant n-grams for a given day
     div_example = storywrangler.get_divergence(
           date=datetime(2010, 1, 1),
           lang="en",
           database="1grams",
-          max_rank=1000
+          max_rank=1000,
+          rt=True
     )
     div_example.to_csv("tests/ngrams_divergence_example.tsv.gz", sep='\t')
 

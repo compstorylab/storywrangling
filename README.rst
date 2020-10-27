@@ -116,7 +116,7 @@ Argument                                            Description
 Name              Type      Default
 ================  ========  ======================  =============================
 ``ngram``         str       required                target 1-, 2-, or 3-gram  
-``lang``          str       "\_all"                 target language (iso code)
+``lang``          str       "en"                    target language (iso code)
 ``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
 ================  ========  ======================  =============================
@@ -168,7 +168,7 @@ Argument                                            Description
 Name              Type      Default
 ================  ========  ======================  ===============================
 ``ngrams``        list      required                a list of 1-, 2-, or 3-grams  
-``lang``          str       "\_all"                 target language (iso code)
+``lang``          str       "en"                    target language (iso code)
 ``database``      str       "1grams"                target database collection
 ``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
@@ -289,17 +289,18 @@ To get the Zipf distribution of all
 :math:`n`-grams in our database for a given language on a signle day,
 please use the ``get_zipf_dist()`` method:
 
-==============  ========  ======================  ===============================
+==============  ========  ======================  =====================================
 Argument                                          Description
-------------------------------------------------  -------------------------------
+------------------------------------------------  -------------------------------------
 Name            Type      Default
-==============  ========  ======================  ===============================
+==============  ========  ======================  =====================================
 ``date``        datetime  required                target date 
-``lang``        str       "\_all"                 target language (iso code)
+``lang``        str       "en"                    target language (iso code)
 ``database``    str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
 ``min_count``   int       None                    min count cutoff (optional)
-==============  ========  ======================  ===============================
+``rt``          bool      True                    include or exclude RTs (optional)
+==============  ========  ======================  =====================================
 
 
 **Example code**
@@ -309,7 +310,9 @@ Name            Type      Default
     ngrams_zipf = storywrangler.get_zipf_dist(
       date=datetime(2010, 1, 1),
       lang="en",
-      database="1grams"
+      database="1grams",
+      max_rank=1000,
+      rt=False
     )
 
 
@@ -335,7 +338,7 @@ Language usage over time
 **************************
 
 To get a timeseries of usage rate for a given language,
-you can use the ``get_lang()`` method:
+you can use the ``get_lang()`` method.
 
 ==============  ============  ======================  ================================
 Argument                                              Description
@@ -386,6 +389,63 @@ Argument                  Description
 ``unique_3grams``         number of unique 3-grams in all tweets (AT)
 ``unique_3grams_no_rt``   number of unique 3-grams in organic tweets (OT)
 ========================  ===================================================
+
+
+
+
+Narratively dominant n-grams
+**********************************
+
+To get a list of narratively dominant :math:`n`-grams of a given day compared to the year before
+please use the ``get_divergence()`` method.
+Each :math:`n`-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
+using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
+
+
+
+==============  ========  ======================  =====================================
+Argument                                          Description
+------------------------------------------------  -------------------------------------
+Name            Type      Default
+==============  ========  ======================  =====================================
+``date``        datetime  required                target date 
+``lang``        str       "en"                    target language (iso code)
+``database``    str       "1grams"                target database collection
+``max_rank``    int       None                    max rank cutoff (optional)
+``rt``          bool      True                    include or exclude RTs (optional)
+==============  ========  ======================  =====================================
+
+
+**Example code**
+
+.. code:: python
+
+    ngrams = storywrangler.get_divergence(
+        date=datetime(2010, 1, 1),
+        lang="en",
+        database="1grams",
+        max_rank=1000,
+        rt=True
+    )
+
+
+**Expected output**
+
+A single Pandas dataframe (see `ngrams_divergence_example.tsv <tests/ngrams_divergence_example.tsv.gz>`__).
+
+==============================  =================================================
+Argument                        Description
+==============================  =================================================
+``ngram``                       requested n-gram  
+``rd_contribution``             1-year rank-divergence in all tweets (AT)
+``rd_contribution_no_rt``       1-year rank-divergence in organic tweets (OT)
+``rank_change``                 relative change of rank in all tweets (AT)
+``rank_change_no_rt``           relative change of rank in organic tweets (OT)
+``time_1``                      reference date
+``time_2``                      current date
+==============================  =================================================
+
+
 
 
 Citation
