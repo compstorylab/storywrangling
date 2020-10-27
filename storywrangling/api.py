@@ -97,7 +97,7 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngram(self, ngram, lang, start_time=None, end_time=None, only_indexed=False):
+    def get_ngram(self, ngram, lang='en', start_time=None, end_time=None, only_indexed=False):
         """Query database for an n-gram timeseries
 
         Args:
@@ -154,7 +154,7 @@ class Storywrangler:
             else:
                 logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_array(self, ngrams_list, database, lang, start_time=None, end_time=None):
+    def get_ngrams_array(self, ngrams_list, database, lang='en', start_time=None, end_time=None):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -224,7 +224,7 @@ class Storywrangler:
         ngrams = pd.concat(ngrams)
         return ngrams
 
-    def get_zipf_dist(self, date, lang, database, max_rank=None, min_count=None):
+    def get_zipf_dist(self, date, lang='en', database='1grams', max_rank=None, min_count=None, rt=True):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -233,6 +233,7 @@ class Storywrangler:
             database (string): target ngram collection ("1grams", "2grams", "3grams")
             max_rank (int): Max rank cutoff (default is None)
             min_count (int): min count cutoff (default is None)
+            rt (bool): a toggle to include or exclude RTs
 
         Returns (pd.DataFrame):
             dataframe of ngrams
@@ -242,14 +243,14 @@ class Storywrangler:
             logger.info(f"Retrieving {self.supported_languages.get(lang)} {database} for {date.date()} ...")
 
             q = Query(database, lang)
-            df = q.query_day(date, max_rank=max_rank, min_count=min_count)
+            df = q.query_day(date, max_rank=max_rank, min_count=min_count, rt=rt)
             df.index.name = 'ngram'
             return df
 
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_divergence(self, date, lang, database, max_rank=None):
+    def get_divergence(self, date, lang, database, max_rank=None, rt=True):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -257,6 +258,7 @@ class Storywrangler:
             lang (string): target language (iso code)
             database (string): target ngram collection ("1grams", "2grams")
             max_rank (int): Max rank cutoff (default is None)
+            rt (bool): a toggle to include or exclude RTs
 
         Returns (pd.DataFrame):
             dataframe of ngrams
@@ -268,7 +270,7 @@ class Storywrangler:
             )
 
             q = Query(("rd_"+database), lang)
-            df = q.query_divergence(date, max_rank=max_rank)
+            df = q.query_divergence(date, max_rank=max_rank, rt=rt)
             df.index.name = 'ngram'
             return df
 
