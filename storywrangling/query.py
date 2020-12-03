@@ -1,15 +1,21 @@
-
 import datetime
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from typing import Optional
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 
 class Query:
     """Class to work with n-gram db"""
 
-    def __init__(self, db, lang, username="guest", pwd="roboctopus", port="27017"):
+    def __init__(self,
+                 db: str,
+                 lang: str,
+                 username: str = "guest",
+                 pwd: str = "roboctopus",
+                 port="27017") -> None:
         """Python wrapper to access database on hydra.uvm.edu
 
         Args:
@@ -23,8 +29,8 @@ class Query:
 
         self.database = db[lang]
         self.lang = lang
-        self.lag = datetime.timedelta(days=2)
-        self.last_updated = datetime.datetime.today() - self.lag
+        self.lag = timedelta(days=2)
+        self.last_updated = datetime.today() - self.lag
 
         self.db_cols = [
             "counts",
@@ -84,7 +90,7 @@ class Query:
             "time_2"
         ]
 
-    def prepare_data(self, query, cols):
+    def prepare_data(self, query: dict, cols: list) -> dict:
         return {
             d: {c: np.nan for c in cols}
             for d in pd.date_range(
@@ -94,27 +100,37 @@ class Query:
             ).date
         }
 
-    def prepare_ngram_query(self, word, start=None, end=None):
+    def prepare_ngram_query(self,
+                            word: str,
+                            start: Optional[datetime] = None,
+                            end: Optional[datetime] = None) -> (dict, dict):
         query = {
             "word": {"$in": word} if type(word) is list else word,
             "time": {
-                "$gte": start if start else datetime.datetime(2009, 1, 1),
+                "$gte": start if start else datetime(2010, 1, 1),
                 "$lte": end if end else self.last_updated,
             }
         }
         return query, self.prepare_data(query, self.cols)
 
-    def prepare_lang_query(self, lang=None, start=None, end=None):
+    def prepare_lang_query(self,
+                           lang: str,
+                           start: Optional[datetime] = None,
+                           end: Optional[datetime] = None) -> (dict, dict):
         query = {
             "language": lang if lang else "_all",
             "time": {
-                "$gte": start if start else datetime.datetime(2009, 1, 1),
+                "$gte": start if start else datetime(2010, 1, 1),
                 "$lte": end if end else self.last_updated,
             }
         }
         return query, self.prepare_data(query, self.lang_cols)
 
-    def prepare_day_query(self, date=None, max_rank=None, min_count=None, rt=True):
+    def prepare_day_query(self,
+                          date: datetime,
+                          max_rank: Optional[int] = None,
+                          min_count: Optional[int] = None,
+                          rt: bool = True) -> dict:
         if max_rank:
             if rt:
                 return {
@@ -142,7 +158,10 @@ class Query:
         else:
             return {"time": date if date else self.last_updated}
 
-    def prepare_divergence_query(self, date=None, max_rank=None, rt=True):
+    def prepare_divergence_query(self,
+                                 date: datetime,
+                                 max_rank: Optional[int] = None,
+                                 rt: bool = True) -> dict:
         if max_rank:
             if rt:
                 return {
@@ -158,15 +177,18 @@ class Query:
         else:
             return {"time_2": date if date else self.last_updated}
 
-    def query_ngram(self, word, start_time=None, end_time=None):
+    def query_ngram(self,
+                    word,
+                    start_time: Optional[datetime] = None,
+                    end_time: Optional[datetime] = None) -> pd.DataFrame:
         """Query database for n-gram timeseries
 
         Args:
-            word (string): target ngram
-            start_time (datetime): starting date for the query
-            end_time (datetime): ending date for the query
+            word: target ngram
+            start_time: starting date for the query
+            end_time: ending date for the query
 
-        Returns (pd.DataFrame):
+        Returns:
             dataframe of ngrams usage over time
         """
         query, data = self.prepare_ngram_query(word, start_time, end_time)
@@ -179,15 +201,18 @@ class Query:
         df = pd.DataFrame.from_dict(data=data, orient="index")
         return df
 
-    def query_ngrams_array(self, word_list, start_time=None, end_time=None):
+    def query_ngrams_array(self,
+                           word_list: list,
+                           start_time: Optional[datetime] = None,
+                           end_time: Optional[datetime] = None) -> pd.DataFrame:
         """Query database for an array n-gram timeseries
 
         Args:
-            word_list (list): list of strings to query mongo
-            start_time (datetime): starting date for the query
-            end_time (datetime): ending date for the query
+            word_list: list of strings to query mongo
+            start_time: starting date for the query
+            end_time: ending date for the query
 
-        Returns (pd.DataFrame):
+        Returns:
             dataframe of ngrams usage over time
         """
 
@@ -208,15 +233,18 @@ class Query:
         df.reset_index(drop=True, inplace=True)
         return df
 
-    def query_languages(self, lang, start_time=None, end_time=None):
+    def query_languages(self,
+                        lang: str,
+                        start_time: Optional[datetime] = None,
+                        end_time: Optional[datetime] = None) -> pd.DataFrame:
         """Query database for language timeseries
 
         Args:
-            lang (string): target language
-            start_time (datetime): starting date for the query
-            end_time (datetime): ending date for the query
+            lang: target language
+            start_time: starting date for the query
+            end_time: ending date for the query
 
-        Returns (pd.DataFrame):
+        Returns:
             dataframe of language over time
         """
         query, data = self.prepare_lang_query(lang, start_time, end_time)
@@ -240,24 +268,28 @@ class Query:
         df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
         return df
 
-    def query_day(self, date, max_rank=None, min_count=None, rt=True):
+    def query_day(self,
+                  date: datetime,
+                  max_rank: Optional[int] = None,
+                  min_count: Optional[int] = None,
+                  rt: bool = True):
         """Query database for all ngrams in a single day
 
         Args:
-            date (datetime): target date
-            max_rank (int): Max rank cutoff (default is None)
-            min_count (int): min count cutoff (default is None)
-            rt (bool): a toggle to include or exclude RTs
+            date: target date
+            max_rank: Max rank cutoff
+            min_count: min count cutoff
+            rt: a toggle to include or exclude RTs
 
-        Returns (pd.DataFrame):
+        Returns:
             dataframe of ngrams
         """
         query = self.prepare_day_query(date, max_rank, min_count, rt)
         zipf = {}
         for t in tqdm(
-            self.database.find(query),
-            desc="Retrieving ngrams",
-            unit=""
+                self.database.find(query),
+                desc="Retrieving ngrams",
+                unit=""
         ):
             zipf[t["word"]] = {}
             for c, db in zip(self.cols, self.db_cols):
@@ -271,23 +303,26 @@ class Query:
 
         return df
 
-    def query_divergence(self, date, max_rank=None, rt=True):
-        """Query database for all ngrams in a single day
+    def query_divergence(self,
+                         date: datetime,
+                         max_rank: Optional[int] = None,
+                         rt: bool = True) -> pd.DataFrame:
+        """Query database for a list of narratively dominant ngrams for a given day
 
         Args:
-            date (datetime): target date
-            max_rank (int): Max rank cutoff (default is None)
-            rt (bool): a toggle to include or exclude RTs
+            date: target date
+            max_rank: Max rank cutoff
+            rt: a toggle to include or exclude RTs
 
-        Returns (pd.DataFrame):
-            dataframe of ngrams
+        Returns:
+            dataframe of ngrams sroted by their rank div contributions
         """
         query = self.prepare_divergence_query(date, max_rank, rt)
         div = {}
         for t in tqdm(
-            self.database.find(query),
-            desc="Retrieving ngrams",
-            unit=""
+                self.database.find(query),
+                desc="Retrieving ngrams",
+                unit=""
         ):
             div[t["ngram"]] = {}
             for c, db in zip(self.div_cols, self.db_div_cols):

@@ -20,6 +20,8 @@ import ujson
 import pickle
 import pandas as pd
 from tqdm import tqdm
+from typing import Optional
+from datetime import datetime
 
 import resources
 from storywrangling.query import Query
@@ -36,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 class Storywrangler:
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Python API to access the Storywrangler database"""
 
         self.parser = pickle.load(
@@ -52,13 +54,13 @@ class Storywrangler:
             pkg_resources.open_binary(resources, 'divergence_languages.json')
         )
 
-    def check_if_indexed(self, language, n):
+    def check_if_indexed(self, language: str, n: int) -> int:
         """Returns the requested number, if supported, or 1, if requested is not supported
         Args:
-            lang (string): target language (iso code)
-            n (int): number of ngrams requested
+            language: target language (iso code)
+            n: number of ngrams requested
 
-        Returns (int):
+        Returns:
             number of ngrams to search, based on what is indexed
 
         """
@@ -69,45 +71,23 @@ class Storywrangler:
             logging.info(f"{language} {n}grams are not indexed yet")
             return 1
 
-    def get_lang(self, lang='_all', start_time=None, end_time=None):
-        """Query database for language usage timeseries
-
-        Args:
-            lang (string): target language (iso code)
-            start_time (datetime): starting date for the query
-            end_time (datetime): ending date for the query
-
-        Returns (pd.DataFrame):
-            dataframe of language over time
-        """
-
-        q = Query("languages", "languages")
-
-        logging.info(f"Retrieving: {lang} -- {self.supported_languages.get(lang)}")
-
-        if self.supported_languages.get(lang) is not None:
-            df = q.query_languages(
-                lang,
-                start_time=start_time,
-                end_time=end_time,
-            )
-            df.index = pd.to_datetime(df.index)
-            df.index.name = 'time'
-            return df
-        else:
-            logger.warning(f"Unsupported language: {lang}")
-
-    def get_ngram(self, ngram, lang='en', start_time=None, end_time=None, only_indexed=False):
+    def get_ngram(self,
+                  ngram: str,
+                  lang: str = 'en',
+                  start_time: Optional[datetime] = None,
+                  end_time: Optional[datetime] = None,
+                  only_indexed: bool = False) -> pd.DataFrame:
         """Query database for an n-gram timeseries
 
         Args:
-            ngram (string): target ngram
-            lang (string): target language (iso code)
-            start_time (datetime): starting date for the query
-            end_time (datetime): ending date for the query
-            only_indexed (bool): only search ngrams that are indexed; if true, return dfs for each 1gram, stacked on top of one another
+            ngram: target ngram
+            lang: target language (iso code)
+            start_time: starting date for the query
+            end_time: ending date for the query
+            only_indexed: only search ngrams that are indexed;
+            if true, return dfs for each 1gram, stacked on top of one another
 
-        Returns (pd.DataFrame):
+        Returns:
             dataframe of ngrams usage over time
         """
 
@@ -154,7 +134,12 @@ class Storywrangler:
             else:
                 logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_array(self, ngrams_list, database, lang='en', start_time=None, end_time=None):
+    def get_ngrams_array(self,
+                         ngrams_list: list,
+                         database: str,
+                         lang: str = 'en',
+                         start_time: Optional[datetime] = None,
+                         end_time: Optional[datetime] = None):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -185,7 +170,10 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_tuples(self, ngrams_list, start_time=None, end_time=None):
+    def get_ngrams_tuples(self,
+                          ngrams_list,
+                          start_time: Optional[datetime] = None,
+                          end_time: Optional[datetime] = None):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -224,7 +212,13 @@ class Storywrangler:
         ngrams = pd.concat(ngrams)
         return ngrams
 
-    def get_zipf_dist(self, date, lang='en', database='1grams', max_rank=None, min_count=None, rt=True):
+    def get_zipf_dist(self,
+                      date: datetime,
+                      lang: str = 'en',
+                      database: str = '1grams',
+                      max_rank: Optional[int] = None,
+                      min_count: Optional[int] = None,
+                      rt: bool = True):
         """Query database for an array n-gram timeseries
 
         Args:
@@ -250,29 +244,3 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_divergence(self, date, lang, database, max_rank=None, rt=True):
-        """Query database for an array n-gram timeseries
-
-        Args:
-            date (datetime): target date
-            lang (string): target language (iso code)
-            database (string): target ngram collection ("1grams", "2grams")
-            max_rank (int): Max rank cutoff (default is None)
-            rt (bool): a toggle to include or exclude RTs
-
-        Returns (pd.DataFrame):
-            dataframe of ngrams
-        """
-
-        if self.divergence_languages.get(lang) is not None:
-            logger.info(
-                f"Retrieving {self.divergence_languages.get(lang)} {database} divergence ngrams for {date.date()} ..."
-            )
-
-            q = Query(("rd_"+database), lang)
-            df = q.query_divergence(date, max_rank=max_rank, rt=rt)
-            df.index.name = 'ngram'
-            return df
-
-        else:
-            logger.warning(f"Unsupported language: {lang}")

@@ -4,9 +4,9 @@ from datetime import datetime
 from storywrangling import Storywrangler, Query
 
 
-class APITesting(unittest.TestCase):
+class NgramsTesting(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        super(APITesting, self).__init__(*args, **kwargs)
+        super(NgramsTesting, self).__init__(*args, **kwargs)
 
         self.api = Storywrangler()
 
@@ -60,44 +60,6 @@ class APITesting(unittest.TestCase):
             "freq",
             "freq_no_rt"
         ]
-        self.lang_cols = [
-            "count",
-            "count_no_rt",
-            "rank",
-            "rank_no_rt",
-            "freq",
-            "freq_no_rt",
-            "comments",
-            "retweets",
-            "speakers",
-            "tweets",
-            "num_1grams",
-            "num_2grams",
-            "num_3grams",
-            "unique_1grams",
-            "unique_2grams",
-            "unique_3grams",
-            "num_1grams_no_rt",
-            "num_2grams_no_rt",
-            "num_3grams_no_rt",
-            "unique_1grams_no_rt",
-            "unique_2grams_no_rt",
-            "unique_3grams_no_rt",
-        ]
-
-        self.div_cols = [
-            "rd_contribution",
-            "rank_change",
-            "rd_contribution__no_rt",
-            "rank_change_no_rt",
-            "time_1",
-            "time_2"
-        ]
-
-    def test_connection_languages(self):
-        q = Query("languages", "languages")
-        df = q.query_languages("en")
-        assert not df.empty
 
     def test_connection_1grams(self):
         q = Query(f"1grams", "en")
@@ -113,26 +75,6 @@ class APITesting(unittest.TestCase):
         q = Query(f"3grams", "en")
         df = q.query_ngram("! ! !")
         assert not df.empty
-
-    def test_get_lang(self):
-        df = self.api.get_lang(
-            self.lang_example,
-            start_time=self.start,
-            end_time=self.end,
-        )
-        expected_df = pd.read_csv(
-            "tests/lang_example.tsv",
-            index_col=0,
-            parse_dates=True,
-            header=0,
-            sep='\t',
-        )
-        expected_df.index.name = 'time'
-
-        pd.testing.assert_frame_equal(
-            df[self.lang_cols],
-            expected_df[self.lang_cols],
-        )
 
     def test_get_ngram(self):
         df = self.api.get_ngram(
