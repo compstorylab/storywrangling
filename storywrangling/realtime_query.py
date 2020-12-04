@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 
-class Query:
+class RealtimeQuery:
     """Class to work with n-gram db"""
 
     def __init__(self,
@@ -29,17 +29,12 @@ class Query:
 
         self.database = db[lang]
         self.lang = lang
-        self.lag = timedelta(days=2)
-        self.last_updated = datetime.today() - self.lag
 
-        self.db_cols = [
-            "counts",
-            "count_noRT",
-            "rank",
-            "rank_noRT",
-            "freq",
-            "freq_noRT",
-        ]
+        self.lag = timedelta(hours=3)
+        self.timespan = timedelta(days=10)
+        self.today = datetime.today()
+        self.reference_date = self.today - self.timespan
+        self.last_updated = self.today - self.lag
 
         self.cols = [
             "count",
@@ -50,54 +45,14 @@ class Query:
             "freq_no_rt"
         ]
 
-        self.lang_cols = [
-            "ft_count",
-            "ft_freq",
-            "ft_rank",
-            "ft_comments",
-            "ft_retweets",
-            "ft_speakers",
-            "ft_tweets",
-            "num_1grams",
-            "num_2grams",
-            "num_3grams",
-            "unique_1grams",
-            "unique_2grams",
-            "unique_3grams",
-            "num_1grams_no_rt",
-            "num_2grams_no_rt",
-            "num_3grams_no_rt",
-            "unique_1grams_no_rt",
-            "unique_2grams_no_rt",
-            "unique_3grams_no_rt",
-        ]
-
-        self.db_div_cols = [
-            "rd_contribution",
-            "rank_change",
-            "rd_contribution_noRT",
-            "rank_change_noRT",
-            "time_1",
-            "time_2"
-        ]
-
-        self.div_cols = [
-            "rd_contribution",
-            "rank_change",
-            "rd_contribution__no_rt",
-            "rank_change_no_rt",
-            "time_1",
-            "time_2"
-        ]
-
     def prepare_data(self, query: dict, cols: list) -> dict:
         return {
-            d: {c: np.nan for c in cols}
-            for d in pd.date_range(
-                start=query["time"]["$gte"].date(),
-                end=query["time"]["$lte"].date(),
-                freq="D",
-            ).date
+            t: {c: np.nan for c in cols}
+            for t in pd.date_range(
+                start=query["time"]["$gte"],
+                end=query["time"]["$lte"],
+                freq="15min",
+            ).round('15min').to_pydatetime().tolist()
         }
 
     def prepare_ngram_query(self,
@@ -107,24 +62,11 @@ class Query:
         query = {
             "word": {"$in": word} if type(word) is list else word,
             "time": {
-                "$gte": start if start else datetime(2010, 1, 1),
+                "$gte": start if start else self.reference_date,
                 "$lte": end if end else self.last_updated,
             }
         }
         return query, self.prepare_data(query, self.cols)
-
-    def prepare_lang_query(self,
-                           lang: str,
-                           start: Optional[datetime] = None,
-                           end: Optional[datetime] = None) -> (dict, dict):
-        query = {
-            "language": lang if lang else "_all",
-            "time": {
-                "$gte": start if start else datetime(2010, 1, 1),
-                "$lte": end if end else self.last_updated,
-            }
-        }
-        return query, self.prepare_data(query, self.lang_cols)
 
     def prepare_day_query(self,
                           date: datetime,
@@ -158,25 +100,6 @@ class Query:
         else:
             return {"time": date if date else self.last_updated}
 
-    def prepare_divergence_query(self,
-                                 date: datetime,
-                                 max_rank: Optional[int] = None,
-                                 rt: bool = True) -> dict:
-        if max_rank:
-            if rt:
-                return {
-                    "time_2": date if date else self.last_updated,
-                    "rank_change": {"$lte": max_rank, "$gte": -max_rank}
-                }
-            else:
-                return {
-                    "time_2": date if date else self.last_updated,
-                    "rank_change_noRT": {"$lte": max_rank, "$gte": -max_rank}
-                }
-
-        else:
-            return {"time_2": date if date else self.last_updated}
-
     def query_ngram(self,
                     word,
                     start_time: Optional[datetime] = None,
@@ -194,9 +117,9 @@ class Query:
         query, data = self.prepare_ngram_query(word, start_time, end_time)
 
         for i in self.database.find(query):
-            d = i["time"].date()
-            for c, db in zip(self.cols, self.db_cols):
-                data[d][c] = i[db]
+            d = i["time"]
+            for c in self.cols:
+                data[d][c] = i[c]
 
         df = pd.DataFrame.from_dict(data=data, orient="index")
         return df
@@ -233,41 +156,6 @@ class Query:
         df.reset_index(drop=True, inplace=True)
         return df
 
-    def query_languages(self,
-                        lang: str,
-                        start_time: Optional[datetime] = None,
-                        end_time: Optional[datetime] = None) -> pd.DataFrame:
-        """Query database for language timeseries
-
-        Args:
-            lang: target language
-            start_time: starting date for the query
-            end_time: ending date for the query
-
-        Returns:
-            dataframe of language over time
-        """
-        query, data = self.prepare_lang_query(lang, start_time, end_time)
-
-        for i in self.database.find(query):
-            d = i["time"].date()
-            for c in self.lang_cols:
-                try:
-                    if np.isnan(data[d][c]):
-                        data[d][c] = i[c]
-                    else:
-                        data[d][c] += i[c]
-                except KeyError:
-                    pass
-
-        df = pd.DataFrame.from_dict(data=data, orient="index")
-        df.columns = df.columns.str.replace(r"ft_", "")
-
-        df["count_no_rt"] = df["count"] - df["retweets"]
-        df["rank_no_rt"] = df["count_no_rt"].rank(method="average", ascending=False)
-        df["freq_no_rt"] = df["count_no_rt"] / df["count_no_rt"].sum()
-        return df
-
     def query_day(self,
                   date: datetime,
                   max_rank: Optional[int] = None,
@@ -300,38 +188,5 @@ class Query:
             df.sort_values(by='count', ascending=False, inplace=True)
         else:
             df.sort_values(by='count_no_rt', ascending=False, inplace=True)
-
-        return df
-
-    def query_divergence(self,
-                         date: datetime,
-                         max_rank: Optional[int] = None,
-                         rt: bool = True) -> pd.DataFrame:
-        """Query database for a list of narratively dominant ngrams for a given day
-
-        Args:
-            date: target date
-            max_rank: Max rank cutoff
-            rt: a toggle to include or exclude RTs
-
-        Returns:
-            dataframe of ngrams sroted by their rank div contributions
-        """
-        query = self.prepare_divergence_query(date, max_rank, rt)
-        div = {}
-        for t in tqdm(
-                self.database.find(query),
-                desc="Retrieving ngrams",
-                unit=""
-        ):
-            div[t["ngram"]] = {}
-            for c, db in zip(self.div_cols, self.db_div_cols):
-                div[t["ngram"]][c] = t[db]
-
-        df = pd.DataFrame.from_dict(data=div, orient="index")
-        if rt:
-            df.sort_values(by='rd_contribution', ascending=False, inplace=True)
-        else:
-            df.sort_values(by='rd_contribution_no_rt', ascending=False, inplace=True)
 
         return df

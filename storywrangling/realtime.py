@@ -24,8 +24,7 @@ from typing import Optional
 from datetime import datetime
 
 import resources
-from storywrangling.query import Query
-from storywrangling.regexr import nparser
+from storywrangling import RealtimeQuery
 
 
 logging.basicConfig(
@@ -53,13 +52,13 @@ class Realtime:
                   lang: str = 'en',
                   start_time: Optional[datetime] = None,
                   end_time: Optional[datetime] = None) -> pd.DataFrame:
-        """Query database for an ngram timeseries
+        """RealtimeQuery database for an ngram timeseries
 
         Args:
             ngram: target ngram
             lang: target language (iso code)
-            start_time: starting date for the query
-            end_time: ending date for the query
+            start_time: starting datetime for the query
+            end_time: ending datetime for the query
 
         Returns:
             dataframe of ngrams usage over time
@@ -67,7 +66,7 @@ class Realtime:
         if self.supported_languages.get(lang) is not None:
             logging.info(f"Retrieving {self.supported_languages.get(lang)}: '{ngram}'")
 
-            q = Query('1grams', lang)
+            q = RealtimeQuery('realtime_1grams', lang)
             df = q.query_ngram(
                 ngram,
                 start_time=start_time,
@@ -86,13 +85,13 @@ class Realtime:
                          lang: str = 'en',
                          start_time: Optional[datetime] = None,
                          end_time: Optional[datetime] = None) -> pd.DataFrame:
-        """Query database for an array ngram timeseries
+        """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of strings to query mongo
             lang: target language (iso code)
-            start_time: starting date for the query
-            end_time: ending date for the query
+            start_time: starting datetime for the query
+            end_time: ending datetime for the query
 
         Returns:
             dataframe of ngrams usage over time
@@ -100,7 +99,7 @@ class Realtime:
         if self.supported_languages.get(lang) is not None:
             logger.info(f"Retrieving: {len(ngrams_list)} 1grams ...")
 
-            q = Query('1grams', lang)
+            q = RealtimeQuery('realtime_1grams', lang)
             df = q.query_ngrams_array(
                 ngrams_list,
                 start_time=start_time,
@@ -117,7 +116,7 @@ class Realtime:
                           ngrams_list: [(str, str)],
                           start_time: Optional[datetime] = None,
                           end_time: Optional[datetime] = None) -> pd.DataFrame:
-        """Query database for an array ngram timeseries
+        """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of tuples (ngram, lang)
@@ -134,7 +133,7 @@ class Realtime:
         for w, lang in pbar:
             pbar.set_description(f"Retrieving: ({self.supported_languages.get(lang)}) {w.rstrip()}")
 
-            q = Query('1grams', lang)
+            q = RealtimeQuery('realtime_1grams', lang)
             df = q.query_ngram(
                 w,
                 start_time=start_time,
@@ -160,10 +159,10 @@ class Realtime:
                       max_rank: Optional[int] = None,
                       min_count: Optional[int] = None,
                       rt: bool = True) -> pd.DataFrame:
-        """Query database for ngram Zipf distribution for a given day
+        """RealtimeQuery database for ngram Zipf distribution for a given day
 
         Args:
-            date: target date
+            date: target datetime
             lang: target language (iso code)
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
@@ -176,7 +175,7 @@ class Realtime:
         if self.supported_languages.get(lang) is not None:
             logger.info(f"Retrieving {self.supported_languages.get(lang)} 1grams for {date.date()} ...")
 
-            q = Query('1grams', lang)
+            q = RealtimeQuery('realtime_1grams', lang)
             df = q.query_day(date, max_rank=max_rank, min_count=min_count, rt=rt)
             df.index.name = 'ngram'
             return df
