@@ -124,7 +124,6 @@ class NgramsTesting(unittest.TestCase):
         df = self.api.get_ngrams_array(
             self.array_example,
             lang=self.lang_example,
-            database="1grams",
             start_time=self.start,
             end_time=self.end,
         )

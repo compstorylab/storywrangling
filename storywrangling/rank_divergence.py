@@ -43,12 +43,6 @@ class RankDivergence:
             pkg_resources.open_binary(resources, 'ngrams.bin')
         )
         self.supported_languages = ujson.load(
-            pkg_resources.open_binary(resources, 'supported_languages.json')
-        )
-        self.indexed_languages = ujson.load(
-            pkg_resources.open_binary(resources, 'indexed_languages.json')
-        )
-        self.divergence_languages = ujson.load(
             pkg_resources.open_binary(resources, 'divergence_languages.json')
         )
 
@@ -70,7 +64,7 @@ class RankDivergence:
         """
 
         logger.info(
-            f"Retrieving {self.divergence_languages.get('en')} {database} divergence ngrams for {date.date()} ..."
+            f"Retrieving {self.supported_languages.get('en')} {database} divergence ngrams for {date.date()} ..."
         )
 
         q = Query(("rd_"+database), 'en')
