@@ -150,9 +150,7 @@ class RealtimeQuery:
         df = tl_df.join(df)
         df["word"] = df.index
         df.drop("_id", axis=1, inplace=True)
-        cols = {d: k for d, k in zip(self.db_cols, self.cols)}
-        cols.update({"word": "ngram"})
-        df.rename(columns=cols, inplace=True)
+        df.rename(columns={"word": "ngram"}, inplace=True)
         df.reset_index(drop=True, inplace=True)
         return df
 
@@ -180,8 +178,8 @@ class RealtimeQuery:
                 unit=""
         ):
             zipf[t["word"]] = {}
-            for c, db in zip(self.cols, self.db_cols):
-                zipf[t["word"]][c] = t[db]
+            for c in self.cols:
+                zipf[t["word"]][c] = t[c]
 
         df = pd.DataFrame.from_dict(data=zipf, orient="index")
         if rt:

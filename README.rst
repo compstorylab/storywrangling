@@ -14,13 +14,41 @@ project is a curation of Twitter into day-scale usage ranks and
 frequencies of 1-, 2-, and 3-grams for over 150 billion tweets in 100+
 languages from 2008 and updated on a daily basis. The massive
 sociolinguistic dataset accounts for social amplification of
-:math:`n`-grams via retweets, which can be visualized through time
+n-grams via retweets, which can be visualized through time
 series
 `contagiograms <https://gitlab.com/compstorylab/contagiograms>`__. The
 project is intended to enable or enhance the study of any large-scale
 temporal phenomena where people matter including culture, politics,
 economics, linguistics, public health, conflict, climate change, and
 data journalism.
+
+
+Usage
+#####
+
+All n-gram timeseries are stored and served on `Hydra`, a server
+at the `Vermont Complex Systems Center <https://vermontcomplexsystems.org/>`__.
+Further details about our backend infrastructure
+and our Twitter stream processing framework
+can be found on our Gitlab
+`repository <https://gitlab.com/compstorylab/storywrangler>`__.
+
+
+If you can connect to the UVM VPN at
+`sslvpn2.uvm.edu` using your UVM credentials,
+then you can access our database using this Python module.
+
+Unfortunately you can not use this package if you are not connected to the UVM network for the time being.
+We do hope to have a workaround eventually,
+but in the meantime if you would like to use our n-grams  dataset in your research,
+we provide an easy way to download daily n-grams timeseries as JSON
+files via our
+`Web service <https://github.com/janeadams/storywrangler>`__.
+
+    If there is a large subset of n-grams you would like from
+    our database, please send us an email.
+
+
 
 Installation
 ############
@@ -57,51 +85,26 @@ required dependencies.
     conda env create -q -f requirements.yml
 
 
-Backend
-########
-All :math:`n`-gram timeseries are stored and served on `Hydra`, a server
-at the `Vermont Complex Systems Center <https://vermontcomplexsystems.org/>`__.
-Further details about our backend infrastructure 
-and our Twitter stream processing framework 
-can be found on our Gitlab
-`repository <https://gitlab.com/compstorylab/storywrangler>`__.
-
-
-Online Viewer
-#############
-
-Our viewer can be accessed online at
-`storywrangling.org <https://storywrangling.org/>`__. We do provide a
-simple way to download these daily :math:`n`-gram timeseries as JSON
-files via the UI.
-
-
-Python Module
-##############
-
-Here, we provide a Python module to query our MongoDB
-on `Hydra`.
-
-    If there is a large subset of :math:`n`-grams you would like from
-    our database, please send us an email.
+n-grams Database
+##########################
 
 
 Getting started
 ***************
 
 Import our library and create an instance of the master
-`Storywrangler() <storywrangling/api.py>`__ class object.
+`Storywrangler() <storywrangling/ngrams.py>`__ class object.
 
 .. code:: python
 
     from datetime import datetime
-    from storywrangling import Storywrangler    
+    from storywrangling import Storywrangler
 
     storywrangler = Storywrangler()
 
-The ``Storywrangler()`` class provides a set of methods 
-to access our database. 
-We outline some of the main methods below. 
+The ``Storywrangler()`` class provides a set of methods
+to access our historical n-grams database.
+We outline some of the main methods below.
 
 
 A single n-gram timeseries
@@ -115,7 +118,7 @@ Argument                                            Description
 --------------------------------------------------  -----------------------------
 Name              Type      Default
 ================  ========  ======================  =============================
-``ngram``         str       required                target 1-, 2-, or 3-gram  
+``ngram``         str       required                target 1-, 2-, or 3-gram
 ``lang``          str       "en"                    target language (iso code)
 ``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
@@ -142,7 +145,7 @@ A single Pandas dataframe (see `ngram_example.tsv <tests/ngram_example.tsv>`__).
 ================  =============================================
 Argument          Description
 ================  =============================================
-``time``          Pandas `DatetimeIndex`   
+``time``          Pandas `DatetimeIndex`
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
@@ -157,8 +160,8 @@ Argument          Description
 A list of n-grams from one language
 ************************************
 
-If you have a list of :math:`n`-grams, 
-then you can use the ``get_ngrams_array()`` method 
+If you have a list of n-grams,
+then you can use the ``get_ngrams_array()`` method
 to retrieve a dataframe of usage rates in a single langauge.
 
 
@@ -167,9 +170,8 @@ Argument                                            Description
 --------------------------------------------------  -------------------------------
 Name              Type      Default
 ================  ========  ======================  ===============================
-``ngrams``        list      required                a list of 1-, 2-, or 3-grams  
+``ngrams``        list      required                a list of 1-, 2-, or 3-grams
 ``lang``          str       "en"                    target language (iso code)
-``database``      str       "1grams"                target database collection
 ``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
 ================  ========  ======================  ===============================
@@ -183,12 +185,11 @@ Name              Type      Default
     ngrams_df = storywrangler.get_ngrams_array(
       ngrams,
       lang="en",
-      database="1grams",
       start_time=datetime(2010, 1, 1),
       end_time=datetime(2020, 1, 1),
     )
 
-All :math:`n`-grams should be in one langauge and one database collection.
+All n-grams should be in one langauge and one database collection.
 
 
 **Expected output**
@@ -198,8 +199,8 @@ A single Pandas dataframe (see `ngrams_array_example.tsv <tests/ngrams_array_exa
 ================  =============================================
 Argument          Description
 ================  =============================================
-``time``          Pandas `DatetimeIndex`   
-``ngram``          requested n-gram  
+``time``          Pandas `DatetimeIndex`
+``ngram``         requested n-gram
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
@@ -214,7 +215,7 @@ Argument          Description
 A list of n-grams across several languages
 ******************************************
 
-To request a list of :math:`n`-grams across several languages, 
+To request a list of n-grams across several languages,
 you can use the ``get_ngrams_tuples()`` method.
 
 ===============  ============  ======================  ================================
@@ -222,7 +223,7 @@ Argument                                               Description
 -----------------------------------------------------  --------------------------------
 Name             Type          Default
 ===============  ============  ======================  ================================
-``ngrams``       list(tuples)  required                a list of ("n-gram", "iso-code")  
+``ngrams``       list(tuples)  required                a list of ("n-gram", "iso-code")
 ``start_time``   datetime      datetime(2009, 1, 1)    starting date for the query
 ``end_time``     datetime      last\_updated           ending date for the query
 ===============  ============  ======================  ================================
@@ -269,8 +270,8 @@ A single Pandas dataframe (see `ngrams_multilang_example.tsv <tests/ngrams_multi
 ================  =============================================
 Argument          Description
 ================  =============================================
-``time``          Pandas `DatetimeIndex`   
-``ngram``         requested n-gram  
+``time``          Pandas `DatetimeIndex`
+``ngram``         requested n-gram
 ``lang``          requested language
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
@@ -285,8 +286,8 @@ Argument          Description
 Zipf distribution for a given day
 **********************************
 
-To get the Zipf distribution of all 
-:math:`n`-grams in our database for a given language on a signle day,
+To get the Zipf distribution of all
+n-grams in our database for a given language on a signle day,
 please use the ``get_zipf_dist()`` method:
 
 ==============  ========  ======================  =====================================
@@ -294,7 +295,7 @@ Argument                                          Description
 ------------------------------------------------  -------------------------------------
 Name            Type      Default
 ==============  ========  ======================  =====================================
-``date``        datetime  required                target date 
+``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
 ``database``    str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
@@ -323,7 +324,7 @@ A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_examp
 ================  =============================================
 Argument          Description
 ================  =============================================
-``ngram``         requested n-gram  
+``ngram``         requested n-gram
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
@@ -333,9 +334,20 @@ Argument          Description
 ================  =============================================
 
 
-
 Language usage over time
-**************************
+########################
+
+
+Import our library and create an instance of the
+`Languages() <storywrangling/languages.py>`__ class object.
+
+.. code:: python
+
+    from datetime import datetime
+    from storywrangling import Languages
+
+    storywrangler = Languages()
+
 
 To get a timeseries of usage rate for a given language,
 you can use the ``get_lang()`` method.
@@ -369,7 +381,7 @@ A single Pandas dataframe (see `lang_example.tsv <tests/lang_example.tsv>`__).
 ========================  ===================================================
 Argument                  Description
 ========================  ===================================================
-``time``                  Pandas `DatetimeIndex`   
+``time``                  Pandas `DatetimeIndex`
 ``count``                 usage rate of all tweets (AT)
 ``count_no_rt``           usage rate of organic tweets (OT)
 ``freq``                  normalized frequency of all tweets (AT)
@@ -392,23 +404,31 @@ Argument                  Description
 
 
 
-
 Narratively dominant n-grams
-**********************************
+####################################
 
-To get a list of narratively dominant :math:`n`-grams of a given day compared to the year before
+Import our library and create an instance of the
+`RankDivergence() <storywrangling/rank_divergence.py>`__ class object.
+
+.. code:: python
+
+    from datetime import datetime
+    from storywrangling import RankDivergence
+
+    storywrangler = RankDivergence()
+
+
+To get a list of narratively dominant n-grams of a given day compared to the year before
 please use the ``get_divergence()`` method.
-Each :math:`n`-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
+Each n-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
 using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
-
-
 
 ==============  ========  ======================  =====================================
 Argument                                          Description
 ------------------------------------------------  -------------------------------------
 Name            Type      Default
 ==============  ========  ======================  =====================================
-``date``        datetime  required                target date 
+``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
 ``database``    str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
@@ -436,7 +456,7 @@ A single Pandas dataframe (see `ngrams_divergence_example.tsv <tests/ngrams_dive
 ==============================  =================================================
 Argument                        Description
 ==============================  =================================================
-``ngram``                       requested n-gram  
+``ngram``                       requested n-gram
 ``rd_contribution``             1-year rank-divergence in all tweets (AT)
 ``rd_contribution_no_rt``       1-year rank-divergence in organic tweets (OT)
 ``rank_change``                 relative change of rank in all tweets (AT)
@@ -446,6 +466,25 @@ Argument                        Description
 ==============================  =================================================
 
 
+Realtime Database
+##################
+
+In addition to our historical daily n-grams database,
+we provide a realtime 1-grams stream
+that serves 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
+namely English (en), Spanish (es), Portuguese (pt), Arabic (ar), and Korean (ko).
+
+To use our realtime stream, create an instance of the
+`Realtime() <storywrangling/realtime.py>`__ class object.
+
+.. code:: python
+
+    from datetime import datetime
+    from storywrangling import Realtime
+
+    storywrangler = Realtime()
+
+The ``Realtime()`` class provides a set of methods identical to the ones found in the Storywrangler class.
 
 
 Citation

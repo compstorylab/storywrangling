@@ -2,15 +2,22 @@ import unittest
 from storywrangling import Realtime, RealtimeQuery
 
 
-class NgramsTesting(unittest.TestCase):
+class RealtimeTesting(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        super(NgramsTesting, self).__init__(*args, **kwargs)
+        super(RealtimeTesting, self).__init__(*args, **kwargs)
 
         self.api = Realtime()
 
         self.lang_example = "en"
         self.ngram_example = "the"
-        self.lang_isindexed_example = "en"
+        self.array_example = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
+        self.multilang_example = [
+            ('coronavirus', 'en'),
+            ('cuarentena', 'es'),
+            ('quarentena', 'pt'),
+            ('فيروس', 'ar'),
+            ('#BTS', 'ko'),
+        ]
 
         self.ngrams_cols = [
             "count",
@@ -31,7 +38,20 @@ class NgramsTesting(unittest.TestCase):
             self.ngram_example,
             self.lang_example,
         )
-        print(df)
+        assert not df.empty
+
+    def test_get_ngrams_array(self):
+        df = self.api.get_ngrams_array(
+            self.array_example,
+            lang=self.lang_example,
+        )
+        assert not df.empty
+
+    def test_get_ngrams_tuples(self):
+        df = self.api.get_ngrams_tuples(
+            self.multilang_example,
+        )
+        assert not df.empty
 
 
 if __name__ == '__main__':
