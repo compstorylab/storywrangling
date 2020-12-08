@@ -338,8 +338,10 @@ Language usage over time
 ########################
 
 
-Import our library and create an instance of the
-`Languages() <storywrangling/languages.py>`__ class object.
+To get a timeseries of usage rate for a given language,
+you need to create an instance of the
+`Languages() <storywrangling/languages.py>`__ class object
+and use the ``get_lang()`` method.
 
 .. code:: python
 
@@ -348,9 +350,6 @@ Import our library and create an instance of the
 
     storywrangler = Languages()
 
-
-To get a timeseries of usage rate for a given language,
-you can use the ``get_lang()`` method.
 
 ==============  ============  ======================  ================================
 Argument                                              Description
@@ -407,8 +406,12 @@ Argument                  Description
 Narratively dominant n-grams
 ####################################
 
-Import our library and create an instance of the
-`RankDivergence() <storywrangling/rank_divergence.py>`__ class object.
+To get a list of narratively dominant n-grams of a given day compared to the year before
+please  create an instance of the
+`RankDivergence() <storywrangling/rank_divergence.py>`__ class
+then use the ``get_divergence()`` method.
+Each n-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
+using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
 
 .. code:: python
 
@@ -417,11 +420,6 @@ Import our library and create an instance of the
 
     storywrangler = RankDivergence()
 
-
-To get a list of narratively dominant n-grams of a given day compared to the year before
-please use the ``get_divergence()`` method.
-Each n-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
-using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
 
 ==============  ========  ======================  =====================================
 Argument                                          Description
