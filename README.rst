@@ -93,7 +93,7 @@ Getting started
 ***************
 
 Import our library and create an instance of the master
-`Storywrangler() <storywrangling/ngrams.py>`__ class object.
+`Storywrangler() <storywrangling/api.py>`__ class object.
 
 .. code:: python
 
@@ -103,7 +103,7 @@ Import our library and create an instance of the master
     storywrangler = Storywrangler()
 
 The ``Storywrangler()`` class provides a set of methods
-to access our historical n-grams database.
+to access our database.
 We outline some of the main methods below.
 
 
@@ -124,7 +124,7 @@ Name              Type      Default
 ``end_time``      datetime  last\_updated           ending date for the query
 ================  ========  ======================  =============================
 
-    See `supported\_languages.json <resources/supported_languages.json>`__
+    See `ngrams\_languages.json <resources/ngrams_languages.json>`__
     for a list of all supported languages.
 
 **Example code**
@@ -200,7 +200,7 @@ A single Pandas dataframe (see `ngrams_array_example.tsv <tests/ngrams_array_exa
 Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`
-``ngram``         requested n-gram
+``ngram``          requested n-gram
 ``count``         usage rate in all tweets (AT)
 ``count_no_rt``   usage rate in organic tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
@@ -297,7 +297,7 @@ Name            Type      Default
 ==============  ========  ======================  =====================================
 ``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
-``database``    str       "1grams"                target database collection
+``ngrams``    str       "1grams"                  target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
 ``min_count``   int       None                    min count cutoff (optional)
 ``rt``          bool      True                    include or exclude RTs (optional)
@@ -311,7 +311,7 @@ Name            Type      Default
     ngrams_zipf = storywrangler.get_zipf_dist(
       date=datetime(2010, 1, 1),
       lang="en",
-      database="1grams",
+      ngrams="1grams",
       max_rank=1000,
       rt=False
     )
@@ -334,22 +334,12 @@ Argument          Description
 ================  =============================================
 
 
-Language usage over time
-########################
 
+Language usage over time
+**************************
 
 To get a timeseries of usage rate for a given language,
-you need to create an instance of the
-`Languages() <storywrangling/languages.py>`__ class object
-and use the ``get_lang()`` method.
-
-.. code:: python
-
-    from datetime import datetime
-    from storywrangling import Languages
-
-    storywrangler = Languages()
-
+you can use the ``get_lang()`` method.
 
 ==============  ============  ======================  ================================
 Argument                                              Description
@@ -360,6 +350,9 @@ Name            Type          Default
 ``start_time``  datetime      datetime(2009, 1, 1)    starting date for the query
 ``end_time``    datetime      last\_updated           ending date for the query
 ==============  ============  ======================  ================================
+
+    See `supported\_languages.json <resources/supported_languages.json>`__
+    for a list of all supported languages.
 
 
 **Example code**
@@ -404,21 +397,13 @@ Argument                  Description
 
 
 Narratively dominant n-grams
-####################################
+**********************************
 
-To get a list of narratively dominant n-grams of a given day compared to the year before
-please  create an instance of the
-`RankDivergence() <storywrangling/rank_divergence.py>`__ class
-then use the ``get_divergence()`` method.
+To get a list of narratively dominant English n-grams of a given day compared to the year before
+please use the ``get_divergence()`` method.
 Each n-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
 using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
 
-.. code:: python
-
-    from datetime import datetime
-    from storywrangling import RankDivergence
-
-    storywrangler = RankDivergence()
 
 
 ==============  ========  ======================  =====================================
@@ -428,7 +413,7 @@ Name            Type      Default
 ==============  ========  ======================  =====================================
 ``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
-``database``    str       "1grams"                target database collection
+``ngrams``    str       "1grams"                  target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
 ``rt``          bool      True                    include or exclude RTs (optional)
 ==============  ========  ======================  =====================================
@@ -441,7 +426,7 @@ Name            Type      Default
     ngrams = storywrangler.get_divergence(
         date=datetime(2010, 1, 1),
         lang="en",
-        database="1grams",
+        ngrams="1grams",
         max_rank=1000,
         rt=True
     )
@@ -464,13 +449,27 @@ Argument                        Description
 ==============================  =================================================
 
 
+
+
+
+
+
+
 Realtime Database
 ##################
+
 
 In addition to our historical daily n-grams database,
 we provide a realtime 1-grams stream
 that serves 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
 namely English (en), Spanish (es), Portuguese (pt), Arabic (ar), and Korean (ko).
+
+    See `realtime\_languages.json <resources/realtime.json>`__
+    for a list of all supported languages.
+
+
+Getting started
+***************
 
 To use our realtime stream, create an instance of the
 `Realtime() <storywrangling/realtime.py>`__ class object.
@@ -482,7 +481,91 @@ To use our realtime stream, create an instance of the
 
     storywrangler = Realtime()
 
-The ``Realtime()`` class provides a set of methods identical to the ones found in the Storywrangler class.
+The ``Realtime()`` class provides a set of methods similar to the ones found in the Storywrangler class.
+
+
+A single n-gram timeseries
+***************************
+
+You can get a dataframe of usage rate for a single 1-gram timeseries
+by using the ``get_ngram()`` method.
+
+    See `supported\_languages.json <resources/supported_languages.json>`__
+    for a list of all supported languages.
+
+**Example code**
+
+.. code:: python
+
+    ngram = storywrangler.get_ngram(
+      ngram="virus",
+      lang="en",
+    )
+
+
+
+A list of n-grams from one language
+************************************
+
+If you have a list of n-grams,
+then you can use the ``get_ngrams_array()`` method
+to retrieve a dataframe of usage rates in a single langauge.
+
+**Example code**
+
+.. code:: python
+
+    ngrams = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
+    ngrams_df = storywrangler.get_ngrams_array(
+      ngrams_list=ngrams,
+      lang="en",
+    )
+
+All 1-grams should be in one language.
+
+
+
+
+A list of n-grams across several languages
+******************************************
+
+To request a list of n-grams across several languages,
+you can use the ``get_ngrams_tuples()`` method.
+
+**Example code**
+
+.. code:: python
+
+    examples = [
+        ('coronavirus', 'en'),
+        ('cuarentena', 'es'),
+        ('quarentena', 'pt'),
+        ('فيروس', 'ar'),
+        ('#BTS', 'ko'),
+    ]
+    ngrams_array = storywrangler.get_ngrams_tuples(examples)
+
+
+Zipf distribution for a given 15-minute batch
+**********************************
+
+To get the Zipf distribution of all
+n-grams in our database for a given language on a single 15-minute batch,
+please use the ``get_zipf_dist()`` method:
+
+
+**Example code**
+
+.. code:: python
+
+    ngrams_zipf = storywrangler.get_zipf_dist(
+      dtime=None,  # datetime(Y, m, d, H, M)
+      lang="en",
+      max_rank=None,
+      min_count=None,
+      rt=True
+    )
+
 
 
 Citation

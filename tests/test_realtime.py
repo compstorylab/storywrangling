@@ -1,5 +1,7 @@
 import unittest
-from storywrangling import Realtime, RealtimeQuery
+import pandas as pd
+from datetime import datetime, timedelta
+from storywrangling import Realtime
 
 
 class RealtimeTesting(unittest.TestCase):
@@ -7,7 +9,6 @@ class RealtimeTesting(unittest.TestCase):
         super(RealtimeTesting, self).__init__(*args, **kwargs)
 
         self.api = Realtime()
-
         self.lang_example = "en"
         self.ngram_example = "the"
         self.array_example = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
@@ -28,11 +29,6 @@ class RealtimeTesting(unittest.TestCase):
             "freq_no_rt"
         ]
 
-    def test_connection(self):
-        q = RealtimeQuery(f"realtime_1grams", "en")
-        df = q.query_ngram("!")
-        assert not df.empty
-
     def test_get_ngram(self):
         df = self.api.get_ngram(
             self.ngram_example,
@@ -50,6 +46,12 @@ class RealtimeTesting(unittest.TestCase):
     def test_get_ngrams_tuples(self):
         df = self.api.get_ngrams_tuples(
             self.multilang_example,
+        )
+        assert not df.empty
+
+    def test_get_zipf_dist(self):
+        df = self.api.get_zipf_dist(
+            lang=self.lang_example,
         )
         assert not df.empty
 

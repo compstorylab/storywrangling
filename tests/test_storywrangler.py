@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from datetime import datetime
-from storywrangling import Storywrangler, Query
+from storywrangling import Storywrangler
 
 
 class NgramsTesting(unittest.TestCase):
@@ -61,20 +61,27 @@ class NgramsTesting(unittest.TestCase):
             "freq_no_rt"
         ]
 
-    def test_connection_1grams(self):
-        q = Query(f"1grams", "en")
-        df = q.query_ngram("!")
-        assert not df.empty
-
-    def test_connection_2grams(self):
-        q = Query(f"2grams", "en")
-        df = q.query_ngram("! !")
-        assert not df.empty
-
-    def test_connection_3grams(self):
-        q = Query(f"3grams", "en")
-        df = q.query_ngram("! ! !")
-        assert not df.empty
+        self.lang_cols = [
+            "count",
+            "freq",
+            "rank",
+            "comments",
+            "retweets",
+            "speakers",
+            "tweets",
+            "num_1grams",
+            "num_2grams",
+            "num_3grams",
+            "unique_1grams",
+            "unique_2grams",
+            "unique_3grams",
+            "num_1grams_no_rt",
+            "num_2grams_no_rt",
+            "num_3grams_no_rt",
+            "unique_1grams_no_rt",
+            "unique_2grams_no_rt",
+            "unique_3grams_no_rt",
+        ]
 
     def test_get_ngram(self):
         df = self.api.get_ngram(
@@ -160,6 +167,50 @@ class NgramsTesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+
+    def test_get_lang(self):
+        df = self.api.get_lang(
+            self.lang_example,
+            start_time=self.start,
+            end_time=self.end,
+        )
+        expected_df = pd.read_csv(
+            "tests/lang_example.tsv",
+            index_col=0,
+            parse_dates=True,
+            header=0,
+            sep='\t',
+        )
+        expected_df.index.name = 'time'
+
+        pd.testing.assert_frame_equal(
+            df[self.lang_cols],
+            expected_df[self.lang_cols],
+        )
+
+    def test_get_zipf_dist(self):
+        df = self.api.get_zipf_dist(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+        )
+        assert not df.empty
+
+    def test_get_divergence_1grams(self):
+        df = self.api.get_divergence(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+        )
+        assert not df.empty
+
+    def test_get_divergence_2grams(self):
+        df = self.api.get_divergence(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='2grams',
+        )
+        assert not df.empty
 
 
 if __name__ == '__main__':

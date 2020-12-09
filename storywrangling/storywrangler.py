@@ -44,18 +44,19 @@ class Storywrangler:
             database: desired database to query,
             please refer to README.rst to see all available options (default: ALL)
         """
-
         self.database = database
 
-        self.parser = pickle.load(
-            pkg_resources.open_binary(resources, 'ngrams.bin')
-        )
-        self.supported_languages = ujson.load(
-            pkg_resources.open_binary(resources, 'ngrams_languages.json')
-        )
-        self.indexed_languages = ujson.load(
-            pkg_resources.open_binary(resources, 'indexed_languages.json')
-        )
+        with pkg_resources.open_binary(resources, 'ngrams.bin') as f:
+            self.parser = pickle.load(f)
+
+        with pkg_resources.open_binary(resources, 'ngrams_languages.json') as f:
+            self.ngrams_languages = ujson.load(f)
+
+        with pkg_resources.open_binary(resources, 'indexed_languages.json') as f:
+            self.indexed_languages = ujson.load(f)
+
+        with pkg_resources.open_binary(resources, 'supported_languages.json') as f:
+            self.supported_languages = ujson.load(f)
 
     def select_database(self, ngrams:  str = '1grams', lang: str = 'en'):
         """Create a custom Query based on the desired database and language collection
@@ -115,7 +116,7 @@ class Storywrangler:
             if only_indexed:
                 q = self.select_database("1grams", lang)
 
-                if self.supported_languages.get(lang) is not None:
+                if self.ngrams_languages.get(lang) is not None:
                     ngrams = list(nparser(ngram, parser=self.parser, n=1).keys())
 
                     df = q.query_ngrams_array(
@@ -132,8 +133,8 @@ class Storywrangler:
         else:
             q = self.select_database(f"{n}grams", lang)
 
-            if self.supported_languages.get(lang) is not None:
-                logging.info(f"Retrieving {self.supported_languages.get(lang)}: {n}gram -- '{ngram}'")
+            if self.ngrams_languages.get(lang) is not None:
+                logging.info(f"Retrieving {self.ngrams_languages.get(lang)}: {n}gram -- '{ngram}'")
 
                 df = q.query_ngram(
                     ngram,
@@ -167,7 +168,7 @@ class Storywrangler:
         n = len(nparser(ngrams_list[0], parser=self.parser, n=1))
         q = self.select_database(f"{n}grams", lang)
 
-        if self.supported_languages.get(lang) is not None:
+        if self.ngrams_languages.get(lang) is not None:
             logger.info(f"Retrieving: {len(ngrams_list)} {n}grams ...")
 
             df = q.query_ngrams_array(
@@ -202,7 +203,7 @@ class Storywrangler:
 
         for w, lang in pbar:
             n = len(nparser(w, parser=self.parser, n=1))
-            pbar.set_description(f"Retrieving: ({self.supported_languages.get(lang)}) {w.rstrip()}")
+            pbar.set_description(f"Retrieving: ({self.ngrams_languages.get(lang)}) {w.rstrip()}")
 
             q = self.select_database(f"{n}grams", lang)
             df = q.query_ngram(
@@ -212,8 +213,8 @@ class Storywrangler:
             )
 
             df["ngram"] = w
-            df["lang"] = self.supported_languages.get(lang) \
-                if self.supported_languages.get(lang) is not None else "All"
+            df["lang"] = self.ngrams_languages.get(lang) \
+                if self.ngrams_languages.get(lang) is not None else "All"
 
             df.index.name = 'time'
             df.index = pd.to_datetime(df.index)
@@ -244,8 +245,8 @@ class Storywrangler:
         Returns:
             dataframe of ngrams
         """
-        if self.supported_languages.get(lang) is not None:
-            logger.info(f"Retrieving {self.supported_languages.get(lang)} {ngrams} for {date.date()} ...")
+        if self.ngrams_languages.get(lang) is not None:
+            logger.info(f"Retrieving {self.ngrams_languages.get(lang)} {ngrams} for {date.date()} ...")
 
             q = self.select_database(ngrams, lang)
             df = q.query_day(date, max_rank=max_rank, min_count=min_count, rt=rt)
@@ -255,3 +256,63 @@ class Storywrangler:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
+    def get_lang(self,
+                 lang: Optional[str] = None,
+                 start_time: Optional[datetime] = None,
+                 end_time: Optional[datetime] = None) -> pd.DataFrame:
+        """Query database for language usage timeseries
+
+        Args:
+            lang: target language (iso code) [default: '_all]
+            start_time: starting date for the query [default: 2010-01-01]
+            end_time: ending date for the query [default: today]
+
+        Returns:
+            dataframe of language over time
+        """
+
+        q = Query("languages", "languages")
+
+        logging.info(f"Retrieving: {lang} -- {self.supported_languages.get(lang)}")
+
+        if self.supported_languages.get(lang) is not None:
+            df = q.query_languages(
+                lang,
+                start_time,
+                end_time,
+            )
+            df.index = pd.to_datetime(df.index)
+            df.index.name = 'time'
+            return df
+        else:
+            logger.warning(f"Unsupported language: {lang}")
+
+    def get_divergence(self,
+                       date: datetime,
+                       lang: str = 'en',
+                       ngrams: str = '1grams',
+                       max_rank: Optional[int] = None,
+                       rt: bool = True) -> pd.DataFrame:
+        """Get a list of narratively dominant ngrams for a given day
+
+        Args:
+            date: target date
+            lang: target language (iso code)
+            ngrams: target ngram collection ("1grams", "2grams")
+            max_rank: Max rank cutoff (default is None)
+            rt: a toggle to include or exclude RTs
+
+        Returns (pd.DataFrame):
+            dataframe of ngrams
+        """
+        if self.supported_languages.get(lang) is not None:
+            logger.info(
+                f"Retrieving {self.supported_languages.get('en')} RTD {ngrams} for {date.date()} ..."
+            )
+
+            q = Query(f"rd_{ngrams}", 'en')
+            df = q.query_divergence(date, max_rank=max_rank, rt=rt)
+            df.index.name = 'ngram'
+            return df
+        else:
+            logger.warning(f"Unsupported language: {lang}")

@@ -40,25 +40,18 @@ class Realtime:
     def __init__(self) -> None:
         """Python API to access the realtime database"""
 
-        self.parser = pickle.load(
-            pkg_resources.open_binary(resources, 'ngrams.bin')
-        )
-        self.supported_languages = ujson.load(
-            pkg_resources.open_binary(resources, 'realtime_languages.json')
-        )
+        with pkg_resources.open_binary(resources, 'ngrams.bin') as f:
+            self.parser = pickle.load(f)
 
-    def get_ngram(self,
-                  ngram: str,
-                  lang: str = 'en',
-                  start_time: Optional[datetime] = None,
-                  end_time: Optional[datetime] = None) -> pd.DataFrame:
+        with pkg_resources.open_binary(resources, 'realtime_languages.json') as f:
+            self.supported_languages = ujson.load(f)
+
+    def get_ngram(self, ngram: str, lang: str = 'en') -> pd.DataFrame:
         """RealtimeQuery database for an ngram timeseries
 
         Args:
             ngram: target ngram
             lang: target language (iso code)
-            start_time: starting datetime for the query
-            end_time: ending datetime for the query
 
         Returns:
             dataframe of ngrams usage over time
@@ -67,12 +60,7 @@ class Realtime:
             logging.info(f"Retrieving {self.supported_languages.get(lang)}: '{ngram}'")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngram(
-                ngram,
-                start_time=start_time,
-                end_time=end_time,
-            )
-
+            df = q.query_ngram(ngram)
             df.index.name = 'time'
             df.index = pd.to_datetime(df.index)
             return df
@@ -80,18 +68,12 @@ class Realtime:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_array(self,
-                         ngrams_list: list,
-                         lang: str = 'en',
-                         start_time: Optional[datetime] = None,
-                         end_time: Optional[datetime] = None) -> pd.DataFrame:
+    def get_ngrams_array(self, ngrams_list: list, lang: str = 'en') -> pd.DataFrame:
         """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of strings to query mongo
             lang: target language (iso code)
-            start_time: starting datetime for the query
-            end_time: ending datetime for the query
 
         Returns:
             dataframe of ngrams usage over time
@@ -100,11 +82,7 @@ class Realtime:
             logger.info(f"Retrieving: {len(ngrams_list)} 1grams ...")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngrams_array(
-                ngrams_list,
-                start_time=start_time,
-                end_time=end_time,
-            )
+            df = q.query_ngrams_array(ngrams_list)
             df['time'] = pd.to_datetime(df['time'])
             df.set_index(['time', 'ngram'], inplace=True)
             return df
@@ -112,16 +90,11 @@ class Realtime:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_tuples(self,
-                          ngrams_list: [(str, str)],
-                          start_time: Optional[datetime] = None,
-                          end_time: Optional[datetime] = None) -> pd.DataFrame:
+    def get_ngrams_tuples(self, ngrams_list: [(str, str)]) -> pd.DataFrame:
         """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of tuples (ngram, lang)
-            start_time: starting date for the query
-            end_time: ending date for the query
 
         Returns:
             dataframe of ngrams usage over time
@@ -134,15 +107,11 @@ class Realtime:
             pbar.set_description(f"Retrieving: ({self.supported_languages.get(lang)}) {w.rstrip()}")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngram(
-                w,
-                start_time=start_time,
-                end_time=end_time,
-            )
+            df = q.query_ngram(w)
 
             df["ngram"] = w
             df["lang"] = self.supported_languages.get(lang) \
-                if self.supported_languages.get(lang) is not None else "All"
+                if self.supported_languages.get(lang) is not None else "en"
 
             df.index.name = 'time'
             df.index = pd.to_datetime(df.index)
@@ -154,15 +123,15 @@ class Realtime:
         return ngrams
 
     def get_zipf_dist(self,
-                      date: datetime,
+                      dtime: Optional[datetime] = None,
                       lang: str = 'en',
                       max_rank: Optional[int] = None,
                       min_count: Optional[int] = None,
                       rt: bool = True) -> pd.DataFrame:
-        """RealtimeQuery database for ngram Zipf distribution for a given day
+        """Query database for ngram Zipf distribution for a given 15-minute batch
 
         Args:
-            date: target datetime
+            dtime: target datetime
             lang: target language (iso code)
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
@@ -173,12 +142,26 @@ class Realtime:
         """
 
         if self.supported_languages.get(lang) is not None:
-            logger.info(f"Retrieving {self.supported_languages.get(lang)} 1grams for {date.date()} ...")
-
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_day(date, max_rank=max_rank, min_count=min_count, rt=rt)
-            df.index.name = 'ngram'
-            return df
 
+            if dtime is None or dtime > q.last_updated:
+                dtime = q.last_updated
+            else:
+                dtime = pd.Timestamp(dtime).round(q.time_resolution).to_pydatetime()
+
+            if q.reference_date <= dtime <= q.last_updated:
+                logger.info(f"Retrieving {self.supported_languages.get(lang)} 1grams for {dtime} ...")
+
+                df = q.query_batch(
+                    dtime,
+                    max_rank=max_rank,
+                    min_count=min_count,
+                    rt=rt
+                )
+                df.index.name = 'ngram'
+                return df
+
+            else:
+                logger.warning(f"Datatime should be within the last 10 days")
         else:
             logger.warning(f"Unsupported language: {lang}")

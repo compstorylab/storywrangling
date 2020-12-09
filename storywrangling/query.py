@@ -1,3 +1,18 @@
+import sys
+from pathlib import Path
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
+try:
+    sys.path.remove(str(parent))
+except ValueError:
+    pass
+
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    import importlib_resources as pkg_resources
 
 import numpy as np
 import pandas as pd
@@ -6,16 +21,14 @@ from typing import Optional
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 
+import ujson
+import resources
+
 
 class Query:
     """Class to work with n-gram db"""
 
-    def __init__(self,
-                 db: str,
-                 lang: str,
-                 username: str = "guest",
-                 pwd: str = "roboctopus",
-                 port="27017") -> None:
+    def __init__(self, db: str, lang: str) -> None:
         """Python wrapper to access database on hydra.uvm.edu
 
         Args:
@@ -24,12 +37,22 @@ class Query:
             username: username to access database
             pwd: password to access database
         """
-        client = MongoClient(f"mongodb://{username}:{pwd}@hydra.uvm.edu:{port}")
+        with pkg_resources.open_binary(resources, 'client.json') as f:
+            self.credentials = ujson.load(f)
+
+        client = MongoClient(
+            f"{self.credentials['database']}://"
+            f"{self.credentials['username']}:"
+            f"{self.credentials['pwd']}"
+            f"@{self.credentials['domain']}:"
+            f"{self.credentials['port']}"
+        )
         db = client[db]
 
         self.database = db[lang]
         self.lang = lang
         self.lag = timedelta(days=2)
+        self.reference_date = datetime(2010, 1, 1)
         self.last_updated = datetime.today() - self.lag
 
         self.db_cols = [
@@ -84,7 +107,7 @@ class Query:
         self.div_cols = [
             "rd_contribution",
             "rank_change",
-            "rd_contribution__no_rt",
+            "rd_contribution_no_rt",
             "rank_change_no_rt",
             "time_1",
             "time_2"
@@ -107,7 +130,7 @@ class Query:
         query = {
             "word": {"$in": word} if type(word) is list else word,
             "time": {
-                "$gte": start if start else datetime(2010, 1, 1),
+                "$gte": start if start else self.reference_date,
                 "$lte": end if end else self.last_updated,
             }
         }
@@ -120,7 +143,7 @@ class Query:
         query = {
             "language": lang if lang else "_all",
             "time": {
-                "$gte": start if start else datetime(2010, 1, 1),
+                "$gte": start if start else self.reference_date,
                 "$lte": end if end else self.last_updated,
             }
         }
