@@ -10,7 +10,7 @@ with open("requirements.txt") as f:
 setup(
     name="storywrangling",
     version="1.0.0",
-    description="API for the Storywrangler project",
+    description="Python API for the Storywrangler project",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     keywords="NLP twitter ngrams",

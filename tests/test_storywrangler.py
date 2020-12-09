@@ -1,12 +1,12 @@
 import unittest
 import pandas as pd
 from datetime import datetime
-from storywrangling import Storywrangler, Query
+from storywrangling import Storywrangler
 
 
-class APITesting(unittest.TestCase):
+class NgramsTesting(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        super(APITesting, self).__init__(*args, **kwargs)
+        super(NgramsTesting, self).__init__(*args, **kwargs)
 
         self.api = Storywrangler()
 
@@ -60,13 +60,11 @@ class APITesting(unittest.TestCase):
             "freq",
             "freq_no_rt"
         ]
+
         self.lang_cols = [
             "count",
-            "count_no_rt",
-            "rank",
-            "rank_no_rt",
             "freq",
-            "freq_no_rt",
+            "rank",
             "comments",
             "retweets",
             "speakers",
@@ -84,55 +82,6 @@ class APITesting(unittest.TestCase):
             "unique_2grams_no_rt",
             "unique_3grams_no_rt",
         ]
-
-        self.div_cols = [
-            "rd_contribution",
-            "rank_change",
-            "rd_contribution__no_rt",
-            "rank_change_no_rt",
-            "time_1",
-            "time_2"
-        ]
-
-    def test_connection_languages(self):
-        q = Query("languages", "languages")
-        df = q.query_languages("en")
-        assert not df.empty
-
-    def test_connection_1grams(self):
-        q = Query(f"1grams", "en")
-        df = q.query_ngram("!")
-        assert not df.empty
-
-    def test_connection_2grams(self):
-        q = Query(f"2grams", "en")
-        df = q.query_ngram("! !")
-        assert not df.empty
-
-    def test_connection_3grams(self):
-        q = Query(f"3grams", "en")
-        df = q.query_ngram("! ! !")
-        assert not df.empty
-
-    def test_get_lang(self):
-        df = self.api.get_lang(
-            self.lang_example,
-            start_time=self.start,
-            end_time=self.end,
-        )
-        expected_df = pd.read_csv(
-            "tests/lang_example.tsv",
-            index_col=0,
-            parse_dates=True,
-            header=0,
-            sep='\t',
-        )
-        expected_df.index.name = 'time'
-
-        pd.testing.assert_frame_equal(
-            df[self.lang_cols],
-            expected_df[self.lang_cols],
-        )
 
     def test_get_ngram(self):
         df = self.api.get_ngram(
@@ -182,7 +131,6 @@ class APITesting(unittest.TestCase):
         df = self.api.get_ngrams_array(
             self.array_example,
             lang=self.lang_example,
-            database="1grams",
             start_time=self.start,
             end_time=self.end,
         )
@@ -219,6 +167,50 @@ class APITesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+
+    def test_get_lang(self):
+        df = self.api.get_lang(
+            self.lang_example,
+            start_time=self.start,
+            end_time=self.end,
+        )
+        expected_df = pd.read_csv(
+            "tests/lang_example.tsv",
+            index_col=0,
+            parse_dates=True,
+            header=0,
+            sep='\t',
+        )
+        expected_df.index.name = 'time'
+
+        pd.testing.assert_frame_equal(
+            df[self.lang_cols],
+            expected_df[self.lang_cols],
+        )
+
+    def test_get_zipf_dist(self):
+        df = self.api.get_zipf_dist(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+        )
+        assert not df.empty
+
+    def test_get_divergence_1grams(self):
+        df = self.api.get_divergence(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+        )
+        assert not df.empty
+
+    def test_get_divergence_2grams(self):
+        df = self.api.get_divergence(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='2grams',
+        )
+        assert not df.empty
 
 
 if __name__ == '__main__':
