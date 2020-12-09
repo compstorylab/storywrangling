@@ -4,6 +4,5 @@ matplotlib
 numpy
 pandas
 pymongo
-python-bidi
 ujson
 tqdm

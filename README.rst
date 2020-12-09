@@ -10,7 +10,7 @@ Description
 ###########
 
 The `Storywrangler <https://gitlab.com/compstorylab/storywrangler>`__
-project is a curation of Twitter into day-scale usage ranks and
+project is a curation of Twitter data into day-scale usage ranks and
 frequencies of 1-, 2-, and 3-grams for over 150 billion tweets in 100+
 languages from 2008 and updated on a daily basis. The massive
 sociolinguistic dataset accounts for social amplification of
@@ -37,13 +37,12 @@ can be found on our Gitlab
 If you can connect to the UVM VPN at
 `sslvpn2.uvm.edu` using your UVM credentials,
 then you can access our database using this Python module.
-
 Unfortunately you can not use this package if you are not connected to the UVM network for the time being.
 We do hope to have a workaround eventually,
 but in the meantime if you would like to use our n-grams  dataset in your research,
 we provide an easy way to download daily n-grams timeseries as JSON
 files via our
-`Web service <https://github.com/janeadams/storywrangler>`__.
+`web service <https://github.com/janeadams/storywrangler>`__.
 
     If there is a large subset of n-grams you would like from
     our database, please send us an email.
@@ -120,7 +119,7 @@ Name              Type      Default
 ================  ========  ======================  =============================
 ``ngram``         str       required                target 1-, 2-, or 3-gram
 ``lang``          str       "en"                    target language (iso code)
-``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
+``start_time``    datetime  datetime(2010, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
 ================  ========  ======================  =============================
 
@@ -170,9 +169,9 @@ Argument                                            Description
 --------------------------------------------------  -------------------------------
 Name              Type      Default
 ================  ========  ======================  ===============================
-``ngrams``        list      required                a list of 1-, 2-, or 3-grams
+``ngrams_list``   list      required                a list of 1-, 2-, or 3-grams
 ``lang``          str       "en"                    target language (iso code)
-``start_time``    datetime  datetime(2009, 1, 1)    starting date for the query
+``start_time``    datetime  datetime(2010, 1, 1)    starting date for the query
 ``end_time``      datetime  last\_updated           ending date for the query
 ================  ========  ======================  ===============================
 
@@ -223,8 +222,8 @@ Argument                                               Description
 -----------------------------------------------------  --------------------------------
 Name             Type          Default
 ===============  ============  ======================  ================================
-``ngrams``       list(tuples)  required                a list of ("n-gram", "iso-code")
-``start_time``   datetime      datetime(2009, 1, 1)    starting date for the query
+``ngrams_list``  list(tuples)  required                a list of ("n-gram", "iso-code")
+``start_time``   datetime      datetime(2010, 1, 1)    starting date for the query
 ``end_time``     datetime      last\_updated           ending date for the query
 ===============  ============  ======================  ================================
 
@@ -297,7 +296,7 @@ Name            Type      Default
 ==============  ========  ======================  =====================================
 ``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
-``ngrams``    str       "1grams"                  target database collection
+``ngrams``      str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
 ``min_count``   int       None                    min count cutoff (optional)
 ``rt``          bool      True                    include or exclude RTs (optional)
@@ -347,7 +346,7 @@ Argument                                              Description
 Name            Type          Default
 ==============  ============  ======================  ================================
 ``lang``        str           "\_all"                 target language (iso code)
-``start_time``  datetime      datetime(2009, 1, 1)    starting date for the query
+``start_time``  datetime      datetime(2010, 1, 1)    starting date for the query
 ``end_time``    datetime      last\_updated           ending date for the query
 ==============  ============  ======================  ================================
 
@@ -413,7 +412,7 @@ Name            Type      Default
 ==============  ========  ======================  =====================================
 ``date``        datetime  required                target date
 ``lang``        str       "en"                    target language (iso code)
-``ngrams``    str       "1grams"                  target database collection
+``ngrams``      str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
 ``rt``          bool      True                    include or exclude RTs (optional)
 ==============  ========  ======================  =====================================
@@ -453,19 +452,14 @@ Argument                        Description
 
 
 
-
-
 Realtime Database
 ##################
 
 
 In addition to our historical daily n-grams database,
 we provide a realtime 1-grams stream
-that serves 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
+in which we provide 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
 namely English (en), Spanish (es), Portuguese (pt), Arabic (ar), and Korean (ko).
-
-    See `realtime\_languages.json <resources/realtime.json>`__
-    for a list of all supported languages.
 
 
 Getting started
@@ -490,24 +484,17 @@ A single n-gram timeseries
 You can get a dataframe of usage rate for a single 1-gram timeseries
 by using the ``get_ngram()`` method.
 
-    See `supported\_languages.json <resources/supported_languages.json>`__
-    for a list of all supported languages.
-
 **Example code**
 
 .. code:: python
 
-    ngram = storywrangler.get_ngram(
-      ngram="virus",
-      lang="en",
-    )
-
+    ngram = storywrangler.get_ngram("virus", lang="en")
 
 
 A list of n-grams from one language
 ************************************
 
-If you have a list of n-grams,
+If you have a list of 1-grams,
 then you can use the ``get_ngrams_array()`` method
 to retrieve a dataframe of usage rates in a single langauge.
 
@@ -516,20 +503,14 @@ to retrieve a dataframe of usage rates in a single langauge.
 .. code:: python
 
     ngrams = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
-    ngrams_df = storywrangler.get_ngrams_array(
-      ngrams_list=ngrams,
-      lang="en",
-    )
-
-All 1-grams should be in one language.
-
+    ngrams_df = storywrangler.get_ngrams_array(ngrams_list=ngrams, lang="en")
 
 
 
 A list of n-grams across several languages
 ******************************************
 
-To request a list of n-grams across several languages,
+To request a list of 1-grams across several languages,
 you can use the ``get_ngrams_tuples()`` method.
 
 **Example code**
@@ -549,8 +530,7 @@ you can use the ``get_ngrams_tuples()`` method.
 Zipf distribution for a given 15-minute batch
 **********************************
 
-To get the Zipf distribution of all
-n-grams in our database for a given language on a single 15-minute batch,
+To get the Zipf distribution for a given 15-minute batch,
 please use the ``get_zipf_dist()`` method:
 
 

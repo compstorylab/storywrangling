@@ -1,6 +1,4 @@
 import unittest
-import pandas as pd
-from datetime import datetime, timedelta
 from storywrangling import Realtime
 
 
@@ -10,7 +8,7 @@ class RealtimeTesting(unittest.TestCase):
 
         self.api = Realtime()
         self.lang_example = "en"
-        self.ngram_example = "the"
+        self.ngram_example = "virus"
         self.array_example = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
         self.multilang_example = [
             ('coronavirus', 'en'),
