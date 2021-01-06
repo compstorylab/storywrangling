@@ -46,12 +46,13 @@ class Realtime:
         with pkg_resources.open_binary(resources, 'realtime_languages.json') as f:
             self.supported_languages = ujson.load(f)
 
-    def get_ngram(self, ngram: str, lang: str = 'en') -> pd.DataFrame:
+    def get_ngram(self, ngram: str, lang: str = 'en', case_insensitive: bool = False) -> pd.DataFrame:
         """RealtimeQuery database for an ngram timeseries
 
         Args:
             ngram: target ngram
             lang: target language (iso code)
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
@@ -60,7 +61,7 @@ class Realtime:
             logging.info(f"Retrieving {self.supported_languages.get(lang)}: '{ngram}'")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngram(ngram)
+            df = q.query_ngram(ngram, case_insensitive)
             df.index.name = 'time'
             df.index = pd.to_datetime(df.index)
             return df
@@ -68,12 +69,13 @@ class Realtime:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_array(self, ngrams_list: list, lang: str = 'en') -> pd.DataFrame:
+    def get_ngrams_array(self, ngrams_list: list, lang: str = 'en', case_insensitive: bool = False) -> pd.DataFrame:
         """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of strings to query mongo
             lang: target language (iso code)
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
@@ -82,7 +84,7 @@ class Realtime:
             logger.info(f"Retrieving: {len(ngrams_list)} 1grams ...")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngrams_array(ngrams_list)
+            df = q.query_ngrams_array(ngrams_list, case_insensitive)
             df['time'] = pd.to_datetime(df['time'])
             df.set_index(['time', 'ngram'], inplace=True)
             return df
@@ -90,11 +92,12 @@ class Realtime:
         else:
             logger.warning(f"Unsupported language: {lang}")
 
-    def get_ngrams_tuples(self, ngrams_list: [(str, str)]) -> pd.DataFrame:
+    def get_ngrams_tuples(self, ngrams_list: [(str, str)], case_insensitive: bool = False) -> pd.DataFrame:
         """RealtimeQuery database for an array ngram timeseries
 
         Args:
             ngrams_list: list of tuples (ngram, lang)
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
@@ -107,7 +110,7 @@ class Realtime:
             pbar.set_description(f"Retrieving: ({self.supported_languages.get(lang)}) {w.rstrip()}")
 
             q = RealtimeQuery('realtime_1grams', lang)
-            df = q.query_ngram(w)
+            df = q.query_ngram(w, case_insensitive)
 
             df["ngram"] = w
             df["lang"] = self.supported_languages.get(lang) \
@@ -125,6 +128,7 @@ class Realtime:
     def get_zipf_dist(self,
                       dtime: Optional[datetime] = None,
                       lang: str = 'en',
+                      case_insensitive: bool = False,
                       max_rank: Optional[int] = None,
                       min_count: Optional[int] = None,
                       rt: bool = True) -> pd.DataFrame:
@@ -133,6 +137,7 @@ class Realtime:
         Args:
             dtime: target datetime
             lang: target language (iso code)
+            case_insensitive: a toggle for case sensitivity
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
             rt: a toggle to include or exclude RTs
@@ -154,6 +159,7 @@ class Realtime:
 
                 df = q.query_batch(
                     dtime,
+                    #case_insensitive=case_insensitive,
                     max_rank=max_rank,
                     min_count=min_count,
                     rt=rt

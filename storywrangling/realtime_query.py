@@ -21,6 +21,8 @@ from tqdm import tqdm
 from typing import Optional
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+from pymongo.collation import Collation, CollationStrength
+from pymongo.cursor import Cursor
 
 import ujson
 import resources
@@ -119,30 +121,49 @@ class RealtimeQuery:
         else:
             return {"time": date if date else self.last_updated}
 
-    def query_ngram(self, word) -> pd.DataFrame:
+    def run_query(self, q: dict, case_insensitive: bool) -> Cursor:
+        if case_insensitive:
+            query = self.database.find(q).collation(
+                Collation(locale=self.lang, strength=CollationStrength.SECONDARY)
+            )
+        else:
+            query = self.database.find(q)
+        return query
+
+    def query_ngram(self, word: str, case_insensitive: bool = False) -> pd.DataFrame:
         """Query database for n-gram timeseries
 
         Args:
             word: target ngram
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
         """
         query, data = self.prepare_ngram_query(word)
 
-        for i in self.database.find(query):
+        for i in self.run_query(query, case_insensitive):
             d = i["time"]
             for c in self.cols:
-                data[d][c] = i[c]
+                if np.isnan(data[d][c]):
+                    data[d][c] = i[c]
+                else:
+                    # take top rank for case insensitive queries
+                    if 'rank' in c:
+                        data[d][c] = np.min([data[d][c], i[c]])
+                    # add up counts and freqs for case insensitive queries
+                    else:
+                        data[d][c] += i[c]
 
         df = pd.DataFrame.from_dict(data=data, orient="index")
         return df
 
-    def query_ngrams_array(self, word_list: list) -> pd.DataFrame:
+    def query_ngrams_array(self, word_list: list, case_insensitive: bool = False) -> pd.DataFrame:
         """Query database for an array n-gram timeseries
 
         Args:
             word_list: list of strings to query mongo
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
@@ -150,17 +171,20 @@ class RealtimeQuery:
 
         query, data = self.prepare_ngram_query(word_list)
 
-        df = pd.DataFrame(list(self.database.find(query)))
-        df.set_index("word", inplace=True, drop=False)
-
-        tl_df = pd.DataFrame(word_list)
-        tl_df.set_index(0, inplace=True)
-
-        df = tl_df.join(df)
-        df["word"] = df.index
-        df.drop("_id", axis=1, inplace=True)
+        df = pd.DataFrame(list(self.run_query(query, case_insensitive)))
         df.rename(columns={"word": "ngram"}, inplace=True)
-        df.reset_index(drop=True, inplace=True)
+        df['ngram'] = df['ngram'].str.lower()
+
+        df = df.groupby(['time', 'ngram']).agg({
+            'count': 'sum',
+            'count_no_rt': 'sum',
+            'freq': 'sum',
+            'freq_no_rt': 'sum',
+            'rank': 'min',
+            'rank_no_rt': 'min',
+        })
+
+        df.reset_index(inplace=True)
         return df
 
     def query_batch(self,
