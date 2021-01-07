@@ -488,7 +488,7 @@ by using the ``get_ngram()`` method.
 
 .. code:: python
 
-    ngram = storywrangler.get_ngram("virus", lang="en")
+    ngram = storywrangler.get_ngram("virus", lang="en", case_insensitive=False)
 
 
 A list of n-grams from one language
@@ -503,7 +503,7 @@ to retrieve a dataframe of usage rates in a single langauge.
 .. code:: python
 
     ngrams = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
-    ngrams_df = storywrangler.get_ngrams_array(ngrams_list=ngrams, lang="en")
+    ngrams_df = storywrangler.get_ngrams_array(ngrams_list=ngrams, lang="en", case_insensitive=False)
 
 
 
@@ -524,11 +524,11 @@ you can use the ``get_ngrams_tuples()`` method.
         ('فيروس', 'ar'),
         ('#BTS', 'ko'),
     ]
-    ngrams_array = storywrangler.get_ngrams_tuples(examples)
+    ngrams_array = storywrangler.get_ngrams_tuples(examples, case_insensitive=True)
 
 
 Zipf distribution for a given 15-minute batch
-**********************************
+**********************************************
 
 To get the Zipf distribution for a given 15-minute batch,
 please use the ``get_zipf_dist()`` method:
@@ -541,6 +541,7 @@ please use the ``get_zipf_dist()`` method:
     ngrams_zipf = storywrangler.get_zipf_dist(
       dtime=None,  # datetime(Y, m, d, H, M)
       lang="en",
+      case_insensitive=False,
       max_rank=None,
       min_count=None,
       rt=True

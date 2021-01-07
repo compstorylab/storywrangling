@@ -21,6 +21,8 @@ from tqdm import tqdm
 from typing import Optional
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+from pymongo.collation import Collation, CollationStrength
+from pymongo.cursor import Cursor
 
 import ujson
 import resources
@@ -119,30 +121,71 @@ class RealtimeQuery:
         else:
             return {"time": date if date else self.last_updated}
 
-    def query_ngram(self, word) -> pd.DataFrame:
+    def run_query(self, q: dict, case_insensitive: bool) -> Cursor:
+        if case_insensitive:
+            query = self.database.find(q).collation(
+                Collation(locale=self.lang, strength=CollationStrength.SECONDARY)
+            )
+        else:
+            query = self.database.find(q)
+        return query
+
+    def lowercase(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Convert ngrams to lowercase and recompute counts, freqs, and ranks
+
+        Args:
+            df: original dataframe of ngrams
+
+        Returns:
+            modified dataframe
+        """
+        df['ngram'] = df['ngram'].str.lower()
+
+        df = df.groupby('ngram').agg({
+            'count': 'sum',
+            'count_no_rt': 'sum',
+            'freq': 'sum',
+            'freq_no_rt': 'sum',
+            'rank': 'min',
+            'rank_no_rt': 'min',
+        })
+
+        return df
+
+    def query_ngram(self, word: str, case_insensitive: bool = False) -> pd.DataFrame:
         """Query database for n-gram timeseries
 
         Args:
             word: target ngram
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
         """
         query, data = self.prepare_ngram_query(word)
 
-        for i in self.database.find(query):
+        for i in self.run_query(query, case_insensitive):
             d = i["time"]
             for c in self.cols:
-                data[d][c] = i[c]
+                if np.isnan(data[d][c]):
+                    data[d][c] = i[c]
+                else:
+                    # take top rank for case insensitive queries
+                    if 'rank' in c:
+                        data[d][c] = np.min([data[d][c], i[c]])
+                    # add up counts and freqs for case insensitive queries
+                    else:
+                        data[d][c] += i[c]
 
         df = pd.DataFrame.from_dict(data=data, orient="index")
         return df
 
-    def query_ngrams_array(self, word_list: list) -> pd.DataFrame:
+    def query_ngrams_array(self, word_list: list, case_insensitive: bool = False) -> pd.DataFrame:
         """Query database for an array n-gram timeseries
 
         Args:
             word_list: list of strings to query mongo
+            case_insensitive: a toggle for case sensitivity
 
         Returns:
             dataframe of ngrams usage over time
@@ -150,21 +193,27 @@ class RealtimeQuery:
 
         query, data = self.prepare_ngram_query(word_list)
 
-        df = pd.DataFrame(list(self.database.find(query)))
-        df.set_index("word", inplace=True, drop=False)
+        df = pd.DataFrame(list(
+            self.run_query(query, case_insensitive)
+        )).rename(columns={"word": "ngram"})
 
-        tl_df = pd.DataFrame(word_list)
-        tl_df.set_index(0, inplace=True)
+        if case_insensitive:
+            df['ngram'] = df['ngram'].str.lower()
 
-        df = tl_df.join(df)
-        df["word"] = df.index
-        df.drop("_id", axis=1, inplace=True)
-        df.rename(columns={"word": "ngram"}, inplace=True)
-        df.reset_index(drop=True, inplace=True)
+        df = df.groupby(['time', 'ngram']).agg({
+            'count': 'sum',
+            'count_no_rt': 'sum',
+            'freq': 'sum',
+            'freq_no_rt': 'sum',
+            'rank': 'min',
+            'rank_no_rt': 'min',
+        })
+        df.reset_index(inplace=True)
         return df
 
     def query_batch(self,
                     dtime: datetime,
+                    case_insensitive: bool = False,
                     max_rank: Optional[int] = None,
                     min_count: Optional[int] = None,
                     rt: bool = True):
@@ -172,6 +221,7 @@ class RealtimeQuery:
 
         Args:
             dtime: target datetime
+            case_insensitive: a toggle for case sensitivity
             max_rank: Max rank cutoff
             min_count: min count cutoff
             rt: a toggle to include or exclude RTs
@@ -181,17 +231,15 @@ class RealtimeQuery:
         """
         query = self.prepare_day_query(dtime, max_rank, min_count, rt)
 
-        zipf = {}
-        for t in tqdm(
-                self.database.find(query),
-                desc="Retrieving ngrams",
-                unit=""
-        ):
-            zipf[t["word"]] = {}
-            for c in self.cols:
-                zipf[t["word"]][c] = t[c]
+        df = pd.DataFrame(tqdm(
+            self.run_query(query, case_insensitive),
+            desc="Retrieving ngrams",
+            unit=""
+        )).rename(columns={"word": "ngram"}).drop(columns=['_id', 'time'])
 
-        df = pd.DataFrame.from_dict(data=zipf, orient="index")
+        if case_insensitive:
+            df = self.lowercase(df)
+
         if rt:
             df.sort_values(by='count', ascending=False, inplace=True)
         else:
