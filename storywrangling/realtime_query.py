@@ -130,6 +130,28 @@ class RealtimeQuery:
             query = self.database.find(q)
         return query
 
+    def lowercase(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Convert ngrams to lowercase and recompute counts, freqs, and ranks
+
+        Args:
+            df: original dataframe of ngrams
+
+        Returns:
+            modified dataframe
+        """
+        df['ngram'] = df['ngram'].str.lower()
+
+        df = df.groupby('ngram').agg({
+            'count': 'sum',
+            'count_no_rt': 'sum',
+            'freq': 'sum',
+            'freq_no_rt': 'sum',
+            'rank': 'min',
+            'rank_no_rt': 'min',
+        })
+
+        return df
+
     def query_ngram(self, word: str, case_insensitive: bool = False) -> pd.DataFrame:
         """Query database for n-gram timeseries
 
@@ -171,9 +193,12 @@ class RealtimeQuery:
 
         query, data = self.prepare_ngram_query(word_list)
 
-        df = pd.DataFrame(list(self.run_query(query, case_insensitive)))
-        df.rename(columns={"word": "ngram"}, inplace=True)
-        df['ngram'] = df['ngram'].str.lower()
+        df = pd.DataFrame(list(
+            self.run_query(query, case_insensitive)
+        )).rename(columns={"word": "ngram"})
+
+        if case_insensitive:
+            df['ngram'] = df['ngram'].str.lower()
 
         df = df.groupby(['time', 'ngram']).agg({
             'count': 'sum',
@@ -183,12 +208,12 @@ class RealtimeQuery:
             'rank': 'min',
             'rank_no_rt': 'min',
         })
-
         df.reset_index(inplace=True)
         return df
 
     def query_batch(self,
                     dtime: datetime,
+                    case_insensitive: bool = False,
                     max_rank: Optional[int] = None,
                     min_count: Optional[int] = None,
                     rt: bool = True):
@@ -196,6 +221,7 @@ class RealtimeQuery:
 
         Args:
             dtime: target datetime
+            case_insensitive: a toggle for case sensitivity
             max_rank: Max rank cutoff
             min_count: min count cutoff
             rt: a toggle to include or exclude RTs
@@ -205,17 +231,15 @@ class RealtimeQuery:
         """
         query = self.prepare_day_query(dtime, max_rank, min_count, rt)
 
-        zipf = {}
-        for t in tqdm(
-                self.database.find(query),
-                desc="Retrieving ngrams",
-                unit=""
-        ):
-            zipf[t["word"]] = {}
-            for c in self.cols:
-                zipf[t["word"]][c] = t[c]
+        df = pd.DataFrame(tqdm(
+            self.run_query(query, case_insensitive),
+            desc="Retrieving ngrams",
+            unit=""
+        )).rename(columns={"word": "ngram"}).drop(columns=['_id', 'time'])
 
-        df = pd.DataFrame.from_dict(data=zipf, orient="index")
+        if case_insensitive:
+            df = self.lowercase(df)
+
         if rt:
             df.sort_values(by='count', ascending=False, inplace=True)
         else:

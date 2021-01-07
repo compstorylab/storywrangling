@@ -159,7 +159,7 @@ class Realtime:
 
                 df = q.query_batch(
                     dtime,
-                    #case_insensitive=case_insensitive,
+                    case_insensitive=case_insensitive,
                     max_rank=max_rank,
                     min_count=min_count,
                     rt=rt
