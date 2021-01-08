@@ -81,7 +81,7 @@ class Realtime:
             dataframe of ngrams usage over time
         """
         if self.supported_languages.get(lang) is not None:
-            logger.info(f"Retrieving: {len(ngrams_list)} 1grams ...")
+            logger.info(f"Retrieving timestamps for [{len(ngrams_list)}] 1grams ...")
 
             q = RealtimeQuery('realtime_1grams', lang)
             df = q.query_ngrams_array(ngrams_list, case_insensitive)

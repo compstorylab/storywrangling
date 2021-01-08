@@ -141,14 +141,17 @@ class RealtimeQuery:
         """
         df['ngram'] = df['ngram'].str.lower()
 
+        # add up counts and freqs
         df = df.groupby('ngram').agg({
             'count': 'sum',
             'count_no_rt': 'sum',
             'freq': 'sum',
             'freq_no_rt': 'sum',
-            'rank': 'min',
-            'rank_no_rt': 'min',
         })
+
+        # recompute ranks
+        df['rank'] = df['count'].rank(method='average', ascending=False)
+        df['rank_no_rt'] = df['count_no_rt'].rank(method='average', ascending=False)
 
         return df
 
@@ -193,8 +196,12 @@ class RealtimeQuery:
 
         query, data = self.prepare_ngram_query(word_list)
 
-        df = pd.DataFrame(list(
-            self.run_query(query, case_insensitive)
+        df = pd.DataFrame(tqdm(
+            self.run_query(query, case_insensitive),
+            desc="Retrieving timestamps",
+            unit="",
+            total=int(len(data) * len(word_list)),
+            unit_scale=1/len(word_list)
         )).rename(columns={"word": "ngram"})
 
         if case_insensitive:
@@ -208,7 +215,11 @@ class RealtimeQuery:
             'rank': 'min',
             'rank_no_rt': 'min',
         })
-        df.reset_index(inplace=True)
+
+        index = pd.MultiIndex.from_product([data.keys(), word_list], names=['time', 'ngram'])
+        tl_df = pd.DataFrame(index=index)
+        df = tl_df.join(df).reset_index()
+
         return df
 
     def query_batch(self,
