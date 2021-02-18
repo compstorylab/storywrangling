@@ -20,7 +20,7 @@ from tqdm import tqdm
 from typing import Optional
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-import pymongo
+from pymongo.errors import ServerSelectionTimeoutError
 
 import ujson
 import resources
@@ -51,8 +51,8 @@ class Query:
                 serverSelectionTimeoutMS=5000,
                 connect=True
             )
-            client.server_info()
-        except pymongo.errors.ServerSelectionTimeoutError:
+            client.client.server_info()
+        except ServerSelectionTimeoutError:
             client = MongoClient(
                 f"{self.credentials['database']}://"
                 f"{self.credentials['username']}:"
@@ -61,7 +61,7 @@ class Query:
                 f"{self.credentials['port']}",
                 serverSelectionTimeoutMS=5000
             )
-        
+
         db = client[db]
         self.database = db[lang]
         self.lang = lang
