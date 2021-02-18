@@ -52,7 +52,8 @@ class RealtimeQuery:
                 serverSelectionTimeoutMS=5000,
                 connect=True
             )
-            client.client.server_info()
+            client.server_info()
+
         except ServerSelectionTimeoutError:
             client = MongoClient(
                 f"{self.credentials['database']}://"
