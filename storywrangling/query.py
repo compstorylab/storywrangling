@@ -40,15 +40,29 @@ class Query:
         with pkg_resources.open_binary(resources, 'client.json') as f:
             self.credentials = ujson.load(f)
 
-        client = MongoClient(
-            f"{self.credentials['database']}://"
-            f"{self.credentials['username']}:"
-            f"{self.credentials['pwd']}"
-            f"@{self.credentials['domain']}:"
-            f"{self.credentials['port']}"
-        )
+        try:
+            client = MongoClient(
+                f"{self.credentials['database']}://"
+                f"{self.credentials['username']}:"
+                f"{self.credentials['pwd']}"
+                f"@{self.credentials['domain']}:"
+                f"{self.credentials['port']}",
+                serverSelectionTimeoutMS=5000,
+                connect=True
+            )
+            client.client.server_info()
+        except:
+            client = MongoClient(
+                f"{self.credentials['database']}://"
+                f"{self.credentials['username']}:"
+                f"{self.credentials['pwd']}"
+                f"@localhost:"
+                f"{self.credentials['port']}",
+                serverSelectionTimeoutMS=5000
+            )
+            pass
+        
         db = client[db]
-
         self.database = db[lang]
         self.lang = lang
         self.lag = timedelta(days=2)
