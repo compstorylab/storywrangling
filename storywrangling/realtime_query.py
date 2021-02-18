@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 from pymongo.collation import Collation, CollationStrength
 from pymongo.cursor import Cursor
+from pymongo.errors import ServerSelectionTimeoutError
 
 import ujson
 import resources
@@ -41,15 +42,28 @@ class RealtimeQuery:
         with pkg_resources.open_binary(resources, 'client.json') as f:
             self.credentials = ujson.load(f)
 
-        client = MongoClient(
-            f"{self.credentials['database']}://"
-            f"{self.credentials['username']}:"
-            f"{self.credentials['pwd']}"
-            f"@{self.credentials['domain']}:"
-            f"{self.credentials['port']}"
-        )
-        db = client[db]
+        try:
+            client = MongoClient(
+                f"{self.credentials['database']}://"
+                f"{self.credentials['username']}:"
+                f"{self.credentials['pwd']}"
+                f"@{self.credentials['domain']}:"
+                f"{self.credentials['port']}",
+                serverSelectionTimeoutMS=5000,
+                connect=True
+            )
+            client.client.server_info()
+        except ServerSelectionTimeoutError:
+            client = MongoClient(
+                f"{self.credentials['database']}://"
+                f"{self.credentials['username']}:"
+                f"{self.credentials['pwd']}"
+                f"@localhost:"
+                f"{self.credentials['port']}",
+                serverSelectionTimeoutMS=5000
+            )
 
+        db = client[db]
         self.database = db[lang]
         self.lang = lang
 
