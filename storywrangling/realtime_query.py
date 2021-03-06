@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
@@ -69,7 +71,7 @@ class RealtimeQuery:
         self.lang = lang
 
         self.time_resolution = '15min'
-        self.lag = timedelta(hours=3)
+        self.lag = timedelta(hours=4)
         self.timespan = timedelta(days=10)
         self.now = pd.Timestamp.now().round(self.time_resolution).to_pydatetime()
         self.reference_date = self.now - self.timespan
@@ -215,8 +217,6 @@ class RealtimeQuery:
             self.run_query(query, case_insensitive),
             desc="Retrieving timestamps",
             unit="",
-            total=int(len(data) * len(word_list)),
-            unit_scale=1/len(word_list)
         )).rename(columns={"word": "ngram"})
 
         if case_insensitive:

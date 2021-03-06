@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
@@ -31,7 +33,7 @@ from storywrangling.regexr import nparser
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -293,7 +295,7 @@ class Storywrangler:
                        ngrams: str = '1grams',
                        max_rank: Optional[int] = None,
                        rt: bool = True) -> pd.DataFrame:
-        """Get a list of narratively dominant ngrams for a given day
+        """Get a list of narratively trending ngrams for a given day
 
         Args:
             date: target date

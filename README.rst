@@ -14,7 +14,7 @@ project is a curation of Twitter data into day-scale usage ranks and
 frequencies of 1-, 2-, and 3-grams for over 150 billion tweets in 100+
 languages from 2008 and updated on a daily basis. The massive
 sociolinguistic dataset accounts for social amplification of
-n-grams via retweets, which can be visualized through time
+ngrams via retweets, which can be visualized through time
 series
 `contagiograms <https://gitlab.com/compstorylab/contagiograms>`__. The
 project is intended to enable or enhance the study of any large-scale
@@ -26,7 +26,7 @@ data journalism.
 Usage
 #####
 
-All n-gram timeseries are stored and served on `Hydra`, a server
+All ngram timeseries are stored and served on `Hydra`, a server
 at the `Vermont Complex Systems Center <https://vermontcomplexsystems.org/>`__.
 Further details about our backend infrastructure
 and our Twitter stream processing framework
@@ -39,12 +39,12 @@ If you can connect to the UVM VPN at
 then you can access our database using this Python module.
 Unfortunately you can not use this package if you are not connected to the UVM network for the time being.
 We do hope to have a workaround eventually,
-but in the meantime if you would like to use our n-grams  dataset in your research,
-we provide an easy way to download daily n-grams timeseries as JSON
+but in the meantime if you would like to use our ngrams  dataset in your research,
+we provide an easy way to download daily ngrams timeseries as JSON
 files via our
 `web service <https://github.com/janeadams/storywrangler>`__.
 
-    If there is a large subset of n-grams you would like from
+    If there is a large subset of ngrams you would like from
     our database, please send us an email.
 
 
@@ -84,7 +84,7 @@ required dependencies.
     conda env create -q -f requirements.yml
 
 
-n-grams Database
+ngrams Database
 ##########################
 
 
@@ -106,10 +106,10 @@ to access our database.
 We outline some of the main methods below.
 
 
-A single n-gram timeseries
+A single ngram timeseries
 ***************************
 
-You can get a dataframe of usage rate for a single n-gram timeseries
+You can get a dataframe of usage rate for a single ngram timeseries
 by using the ``get_ngram()`` method.
 
 ================  ========  ======================  =============================
@@ -146,20 +146,20 @@ Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`
 ``count``         usage rate in all tweets (AT)
-``count_no_rt``   usage rate in organic tweets (OT)
+``count_no_rt``   usage rate in original tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
-``freq_no_rt``    normalized frequency in organic tweets (OT)
+``freq_no_rt``    normalized frequency in original tweets (OT)
 ``rank``          usage tied-rank in all tweets (AT)
-``rank_no_rt``    usage tied-rank in organic tweets (OT)
+``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
 
 
 
 
-A list of n-grams from one language
+A list of ngrams from one language
 ************************************
 
-If you have a list of n-grams,
+If you have a list of ngrams,
 then you can use the ``get_ngrams_array()`` method
 to retrieve a dataframe of usage rates in a single langauge.
 
@@ -188,7 +188,7 @@ Name              Type      Default
       end_time=datetime(2020, 1, 1),
     )
 
-All n-grams should be in one langauge and one database collection.
+All ngrams should be in one langauge and one database collection.
 
 
 **Expected output**
@@ -199,22 +199,22 @@ A single Pandas dataframe (see `ngrams_array_example.tsv <tests/ngrams_array_exa
 Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`
-``ngram``          requested n-gram
+``ngram``          requested ngram
 ``count``         usage rate in all tweets (AT)
-``count_no_rt``   usage rate in organic tweets (OT)
+``count_no_rt``   usage rate in original tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
-``freq_no_rt``    normalized frequency in organic tweets (OT)
+``freq_no_rt``    normalized frequency in original tweets (OT)
 ``rank``          usage tied-rank in all tweets (AT)
-``rank_no_rt``    usage tied-rank in organic tweets (OT)
+``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
 
 
 
 
-A list of n-grams across several languages
+A list of ngrams across several languages
 ******************************************
 
-To request a list of n-grams across several languages,
+To request a list of ngrams across several languages,
 you can use the ``get_ngrams_tuples()`` method.
 
 ===============  ============  ======================  ================================
@@ -222,7 +222,7 @@ Argument                                               Description
 -----------------------------------------------------  --------------------------------
 Name             Type          Default
 ===============  ============  ======================  ================================
-``ngrams_list``  list(tuples)  required                a list of ("n-gram", "iso-code")
+``ngrams_list``  list(tuples)  required                a list of ("ngram", "iso-code")
 ``start_time``   datetime      datetime(2010, 1, 1)    starting date for the query
 ``end_time``     datetime      last\_updated           ending date for the query
 ===============  ============  ======================  ================================
@@ -270,14 +270,14 @@ A single Pandas dataframe (see `ngrams_multilang_example.tsv <tests/ngrams_multi
 Argument          Description
 ================  =============================================
 ``time``          Pandas `DatetimeIndex`
-``ngram``         requested n-gram
+``ngram``         requested ngram
 ``lang``          requested language
 ``count``         usage rate in all tweets (AT)
-``count_no_rt``   usage rate in organic tweets (OT)
+``count_no_rt``   usage rate in original tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
-``freq_no_rt``    normalized frequency in organic tweets (OT)
+``freq_no_rt``    normalized frequency in original tweets (OT)
 ``rank``          usage tied-rank in all tweets (AT)
-``rank_no_rt``    usage tied-rank in organic tweets (OT)
+``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
 
 
@@ -286,7 +286,7 @@ Zipf distribution for a given day
 **********************************
 
 To get the Zipf distribution of all
-n-grams in our database for a given language on a signle day,
+ngrams in our database for a given language on a signle day,
 please use the ``get_zipf_dist()`` method:
 
 ==============  ========  ======================  =====================================
@@ -323,13 +323,13 @@ A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_examp
 ================  =============================================
 Argument          Description
 ================  =============================================
-``ngram``         requested n-gram
+``ngram``         requested ngram
 ``count``         usage rate in all tweets (AT)
-``count_no_rt``   usage rate in organic tweets (OT)
+``count_no_rt``   usage rate in original tweets (OT)
 ``freq``          normalized frequency in all tweets (AT)
-``freq_no_rt``    normalized frequency in organic tweets (OT)
+``freq_no_rt``    normalized frequency in original tweets (OT)
 ``rank``          usage tied-rank in all tweets (AT)
-``rank_no_rt``    usage tied-rank in organic tweets (OT)
+``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
 
 
@@ -374,33 +374,33 @@ Argument                  Description
 ========================  ===================================================
 ``time``                  Pandas `DatetimeIndex`
 ``count``                 usage rate of all tweets (AT)
-``count_no_rt``           usage rate of organic tweets (OT)
+``count_no_rt``           usage rate of original tweets (OT)
 ``freq``                  normalized frequency of all tweets (AT)
-``freq_no_rt``            normalized frequency of organic tweets (OT)
+``freq_no_rt``            normalized frequency of original tweets (OT)
 ``rank``                  usage tied-rank of all tweets (AT)
-``rank_no_rt``            usage tied-rank of organic tweets (OT)
+``rank_no_rt``            usage tied-rank of original tweets (OT)
 ``num_1grams``            volume of 1-grams in all tweets (AT)
-``num_1grams_no_rt``      volume of 1-grams in organic tweets (OT)
+``num_1grams_no_rt``      volume of 1-grams in original tweets (OT)
 ``num_2grams``            volume of 2-grams in all tweets (AT)
-``num_2grams_no_rt``      volume of 3-grams in organic tweets (OT)
+``num_2grams_no_rt``      volume of 3-grams in original tweets (OT)
 ``num_3grams``            volume of 3-grams in all tweets (AT)
-``num_3grams_no_rt``      volume of 3-grams in organic tweets (OT)
+``num_3grams_no_rt``      volume of 3-grams in original tweets (OT)
 ``unique_1grams``         number of unique 1-grams in all tweets (AT)
-``unique_1grams_no_rt``   number of unique 1-grams in organic tweets (OT)
+``unique_1grams_no_rt``   number of unique 1-grams in original tweets (OT)
 ``unique_2grams``         number of unique 2-grams in all tweets (AT)
-``unique_2grams_no_rt``   number of unique 2-grams in organic tweets (OT)
+``unique_2grams_no_rt``   number of unique 2-grams in original tweets (OT)
 ``unique_3grams``         number of unique 3-grams in all tweets (AT)
-``unique_3grams_no_rt``   number of unique 3-grams in organic tweets (OT)
+``unique_3grams_no_rt``   number of unique 3-grams in original tweets (OT)
 ========================  ===================================================
 
 
 
-Narratively dominant n-grams
+Narratively trending ngrams
 **********************************
 
-To get a list of narratively dominant English n-grams of a given day compared to the year before
+To get a list of narratively dominant English ngrams of a given day compared to the year before
 please use the ``get_divergence()`` method.
-Each n-gram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
+Each ngram is ranked daily by 1-year rank-divergence with :math:`\alpha=1/4`
 using our `Allotaxonometry and rank-turbulence divergence <https://arxiv.org/abs/2002.09770>`_ instrument.
 
 
@@ -435,19 +435,23 @@ Name            Type      Default
 
 A single Pandas dataframe (see `ngrams_divergence_example.tsv <tests/ngrams_divergence_example.tsv.gz>`__).
 
-==============================  =================================================
+==============================  ================================================================
 Argument                        Description
-==============================  =================================================
-``ngram``                       requested n-gram
-``rd_contribution``             1-year rank-divergence in all tweets (AT)
-``rd_contribution_no_rt``       1-year rank-divergence in organic tweets (OT)
-``rank_change``                 relative change of rank in all tweets (AT)
-``rank_change_no_rt``           relative change of rank in organic tweets (OT)
+==============================  ================================================================
+``ngram``                       requested ngram
+``rd_contribution``             RTD in all tweets (AT)
+``rd_contribution_no_rt``       RTD in original tweets (OT)
+``normed_rd``                   normalized RTD in all tweets (AT)
+``normed_rd_no_rt``             normalized RTD in original tweets (OT)
 ``time_1``                      reference date
+``rank_1``                      usage rank at reference date in all tweets (AT)
+``rank_1_no_rt``                usage rank at reference date in original tweets (OT)
 ``time_2``                      current date
-==============================  =================================================
-
-
+``rank_2``                      usage rank at current date in all tweets (AT)
+``rank_2_no_rt``                usage rank at current date in original tweets (OT)
+``rank_change``                 new rank relative to trending ngrams in all tweets (AT)
+``rank_change_no_rt``           new rank relative to trending ngrams in original tweets (OT)
+==============================  ================================================================
 
 
 
@@ -456,7 +460,7 @@ Realtime Database
 ##################
 
 
-In addition to our historical daily n-grams database,
+In addition to our historical daily ngrams database,
 we provide a realtime 1-grams stream
 in which we provide 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
 namely English (en), Spanish (es), Portuguese (pt), Arabic (ar), and Korean (ko).
@@ -478,7 +482,7 @@ To use our realtime stream, create an instance of the
 The ``Realtime()`` class provides a set of methods similar to the ones found in the Storywrangler class.
 
 
-A single n-gram timeseries
+A single ngram timeseries
 ***************************
 
 You can get a dataframe of usage rate for a single 1-gram timeseries
@@ -491,7 +495,7 @@ by using the ``get_ngram()`` method.
     ngram = storywrangler.get_ngram("virus", lang="en", case_insensitive=False)
 
 
-A list of n-grams from one language
+A list of ngrams from one language
 ************************************
 
 If you have a list of 1-grams,
@@ -507,7 +511,7 @@ to retrieve a dataframe of usage rates in a single langauge.
 
 
 
-A list of n-grams across several languages
+A list of ngrams across several languages
 ******************************************
 
 To request a list of 1-grams across several languages,
