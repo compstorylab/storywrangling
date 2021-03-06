@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import sys
 from pathlib import Path
 file = Path(__file__).resolve()
@@ -112,18 +115,30 @@ class Query:
 
         self.db_div_cols = [
             "rd_contribution",
-            "rank_change",
             "rd_contribution_noRT",
+            "normed_rd",
+            "normed_rd_noRT",
+            "rank_change",
             "rank_change_noRT",
+            "rank_1",
+            "rank_1_noRT",
+            "rank_2",
+            "rank_2_noRT",
             "time_1",
-            "time_2"
+            "time_2",
         ]
 
         self.div_cols = [
             "rd_contribution",
-            "rank_change",
             "rd_contribution_no_rt",
+            "normed_rd",
+            "normed_rd_no_rt",
+            "rank_change",
             "rank_change_no_rt",
+            "rank_1",
+            "rank_1_no_rt",
+            "rank_2",
+            "rank_2_no_rt",
             "time_1",
             "time_2"
         ]

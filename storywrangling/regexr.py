@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import html
 import re
 from collections import Counter

@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
@@ -293,7 +295,7 @@ class Storywrangler:
                        ngrams: str = '1grams',
                        max_rank: Optional[int] = None,
                        rt: bool = True) -> pd.DataFrame:
-        """Get a list of narratively dominant ngrams for a given day
+        """Get a list of narratively trending ngrams for a given day
 
         Args:
             date: target date
