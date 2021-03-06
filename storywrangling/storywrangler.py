@@ -31,7 +31,7 @@ from storywrangling.regexr import nparser
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
