@@ -73,18 +73,8 @@ Install Development Version
     cd storywrangling
     pip install -e .
 
-Anaconda
-********
 
-This will create a new conda environment (``storywrangling``) with all
-required dependencies.
-
-.. code:: shell
-
-    conda env create -q -f requirements.yml
-
-
-ngrams Database
+API
 ##########################
 
 
@@ -452,104 +442,6 @@ Argument                        Description
 ``rank_change``                 new rank relative to trending ngrams in all tweets (AT)
 ``rank_change_no_rt``           new rank relative to trending ngrams in original tweets (OT)
 ==============================  ================================================================
-
-
-
-
-Realtime Database
-##################
-
-
-In addition to our historical daily ngrams database,
-we provide a realtime 1-grams stream
-in which we provide 15-minute resolution 1-grams for the past 10 days across the top 5 languages on Twitter,
-namely English (en), Spanish (es), Portuguese (pt), Arabic (ar), and Korean (ko).
-
-
-Getting started
-***************
-
-To use our realtime stream, create an instance of the
-`Realtime() <storywrangling/realtime.py>`__ class object.
-
-.. code:: python
-
-    from datetime import datetime
-    from storywrangling import Realtime
-
-    storywrangler = Realtime()
-
-The ``Realtime()`` class provides a set of methods similar to the ones found in the Storywrangler class.
-
-
-A single ngram timeseries
-***************************
-
-You can get a dataframe of usage rate for a single 1-gram timeseries
-by using the ``get_ngram()`` method.
-
-**Example code**
-
-.. code:: python
-
-    ngram = storywrangler.get_ngram("virus", lang="en", case_insensitive=False)
-
-
-A list of ngrams from one language
-************************************
-
-If you have a list of 1-grams,
-then you can use the ``get_ngrams_array()`` method
-to retrieve a dataframe of usage rates in a single langauge.
-
-**Example code**
-
-.. code:: python
-
-    ngrams = ["pandemic", "#BLM", "lockdown", "deaths", "distancing"]
-    ngrams_df = storywrangler.get_ngrams_array(ngrams_list=ngrams, lang="en", case_insensitive=False)
-
-
-
-A list of ngrams across several languages
-******************************************
-
-To request a list of 1-grams across several languages,
-you can use the ``get_ngrams_tuples()`` method.
-
-**Example code**
-
-.. code:: python
-
-    examples = [
-        ('coronavirus', 'en'),
-        ('cuarentena', 'es'),
-        ('quarentena', 'pt'),
-        ('فيروس', 'ar'),
-        ('#BTS', 'ko'),
-    ]
-    ngrams_array = storywrangler.get_ngrams_tuples(examples, case_insensitive=True)
-
-
-Zipf distribution for a given 15-minute batch
-**********************************************
-
-To get the Zipf distribution for a given 15-minute batch,
-please use the ``get_zipf_dist()`` method:
-
-
-**Example code**
-
-.. code:: python
-
-    ngrams_zipf = storywrangler.get_zipf_dist(
-      dtime=None,  # datetime(Y, m, d, H, M)
-      lang="en",
-      case_insensitive=False,
-      max_rank=None,
-      min_count=None,
-      rt=True
-    )
 
 
 

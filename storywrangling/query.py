@@ -26,7 +26,6 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 import ujson
-import resources
 
 
 class Query:
@@ -41,7 +40,7 @@ class Query:
             username: username to access database
             pwd: password to access database
         """
-        with pkg_resources.open_binary(resources, 'client.json') as f:
+        with pkg_resources.open_binary('data', 'client.json') as f:
             self.credentials = ujson.load(f)
 
         try:
