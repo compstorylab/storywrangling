@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+import logging
 import unittest
 import pandas as pd
 from datetime import datetime
@@ -106,6 +107,7 @@ class NgramsTesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+        logging.info(df)
 
     def test_get_indexed_ngram(self):
         df = self.api.get_ngram(
@@ -129,6 +131,7 @@ class NgramsTesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+        logging.info(df)
 
     def test_get_ngrams_array(self):
         df = self.api.get_ngrams_array(
@@ -150,6 +153,7 @@ class NgramsTesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+        logging.info(df)
 
     def test_get_ngrams_tuples(self):
         df = self.api.get_ngrams_tuples(
@@ -170,6 +174,7 @@ class NgramsTesting(unittest.TestCase):
             df[self.ngrams_cols],
             expected_df[self.ngrams_cols],
         )
+        logging.info(df)
 
     def test_get_lang(self):
         df = self.api.get_lang(
@@ -190,6 +195,7 @@ class NgramsTesting(unittest.TestCase):
             df[self.lang_cols],
             expected_df[self.lang_cols],
         )
+        logging.info(df)
 
     def test_get_zipf_dist(self):
         df = self.api.get_zipf_dist(
@@ -197,6 +203,7 @@ class NgramsTesting(unittest.TestCase):
             lang=self.lang_example,
             ngrams='1grams',
         )
+        logging.info(df)
         assert not df.empty
 
     def test_get_divergence_1grams(self):
@@ -205,6 +212,7 @@ class NgramsTesting(unittest.TestCase):
             lang=self.lang_example,
             ngrams='1grams',
         )
+        logging.info(df)
         assert not df.empty
 
     def test_get_divergence_2grams(self):
@@ -213,6 +221,7 @@ class NgramsTesting(unittest.TestCase):
             lang=self.lang_example,
             ngrams='2grams',
         )
+        logging.info(df)
         assert not df.empty
 
 

@@ -1,4 +1,3 @@
-
 ##################
 Storywrangler API
 ##################
@@ -9,15 +8,29 @@ Storywrangler API
 Description
 ###########
 
-The `Storywrangler <https://gitlab.com/compstorylab/storywrangler>`__
-project is a curation of Twitter data into day-scale usage ranks and
-frequencies of 1-, 2-, and 3-grams for over 150 billion tweets in 100+
-languages from 2008 and updated on a daily basis. The massive
-sociolinguistic dataset accounts for social amplification of
-ngrams via retweets, which can be visualized through time
-series
-`contagiograms <https://gitlab.com/compstorylab/contagiograms>`__. The
-project is intended to enable or enhance the study of any large-scale
+The `Storywrangler <https://gitlab.com/compstorylab/storywrangler>`__ project is
+a natural language processing instrument
+designed to carry out an ongoing,
+day-scale curation of over 100 billion tweets
+containing roughly 1 trillion 1-grams
+from 2008 to 2021.
+For each day,
+we break tweets into unigrams, bigrams, and trigrams
+spanning over 100 languages.
+We track ngram usage frequencies,
+and generate Zipf distributions,
+for words, hashtags, handles, numerals, symbols, and emojis.
+We make the data set available through an interactive
+`time series viewer <https://storywrangling.org/>`__,
+and as downloadable time series and daily distributions.
+Although Storywrangler leverages Twitter data,
+our method of extracting and tracking dynamic changes of ngrams
+can be extended to any similar social media platform.
+We showcase a few examples of the many possible avenues of study
+we aim to enable including
+how social amplification can be visualized through
+`contagiograms <https://gitlab.com/compstorylab/contagiograms>`__.
+The project is intended to enable or enhance the study of any large-scale
 temporal phenomena where people matter including culture, politics,
 economics, linguistics, public health, conflict, climate change, and
 data journalism.
@@ -52,7 +65,7 @@ files via our
 Installation
 ############
 
-You can install the latest verion by cloning the repo and running
+You can install the latest version by cloning the repo and running
 `setup.py <setup.py>`__ script in your terminal
 
 Setuptools
@@ -62,7 +75,7 @@ Setuptools
 
     git clone https://gitlab.com/compstorylab/storywrangling.git
     cd storywrangling
-    python setup.py install 
+    python setup.py install
 
 Install Development Version
 ***************************
@@ -71,10 +84,10 @@ Install Development Version
 
     git clone https://gitlab.com/compstorylab/storywrangling.git
     cd storywrangling
-    pip install -e .
+    python setup.py develop
 
 
-API
+Historical Database
 ##########################
 
 
@@ -151,7 +164,7 @@ A list of ngrams from one language
 
 If you have a list of ngrams,
 then you can use the ``get_ngrams_array()`` method
-to retrieve a dataframe of usage rates in a single langauge.
+to retrieve a dataframe of usage rates in a single language.
 
 
 ================  ========  ======================  ===============================
@@ -178,7 +191,7 @@ Name              Type      Default
       end_time=datetime(2020, 1, 1),
     )
 
-All ngrams should be in one langauge and one database collection.
+All ngrams should be in one language and one database collection.
 
 
 **Expected output**
@@ -276,7 +289,7 @@ Zipf distribution for a given day
 **********************************
 
 To get the Zipf distribution of all
-ngrams in our database for a given language on a signle day,
+ngrams in our database for a given language on a single day,
 please use the ``get_zipf_dist()`` method:
 
 ==============  ========  ======================  =====================================
@@ -445,29 +458,149 @@ Argument                        Description
 
 
 
+Realtime Database
+##################
+
+
+In addition to our historical daily ngrams database,
+we provide a 15-min resolution data stream
+
+- `Time window`: Last 30 days
+- `Time resolution`: 15-minute stream of unigrams and bigrams
+- `Languages`: Top 12 languages on Twitter
+
+
++------------+-------+------------+-------+------------+-------+
+| Language   |  ISO  | Language   |  ISO  | Language   |  ISO  |
++============+=======+============+=======+============+=======+
+| English    | `en`  | Spanish    |  `es` | Portuguese | `pt`  |
++------------+-------+------------+-------+------------+-------+
+| Arabic     | `ar`  | Korean     |  `ko` | French     | `fr`  |
++------------+-------+------------+-------+------------+-------+
+| Indonesian | `id`  | Turkish    |  `tr` | Hindi      | `hi`  |
++------------+-------+------------+-------+------------+-------+
+| German     | `de`  | Italian    |  `it` | Russian    | `ru`  |
++------------+-------+------------+-------+------------+-------+
+
+
+
+Getting started
+***************
+
+To use our realtime stream, create an instance of the
+`Realtime() <storywrangling/realtime.py>`__ class object.
+
+.. code:: python
+
+    from datetime import datetime
+    from storywrangling import Realtime
+
+    storywrangler = Realtime()
+
+The ``Realtime()`` class provides a set of methods similar to the ones found in the Storywrangler class.
+
+
+A single n-gram timeseries
+***************************
+
+You can get a dataframe of usage rate for a single n-gram timeseries
+by using the ``get_ngram()`` method.
+
+**Example code**
+
+.. code:: python
+
+    ngram = api.get_ngram("virus", lang="en")
+
+
+A list of n-grams from one language
+************************************
+
+If you have a list of n-grams,
+then you can use the ``get_ngrams_array()`` method
+to retrieve a dataframe of usage rates in a single language.
+
+**Example code**
+
+.. code:: python
+
+    ngrams = ["the pandemic", "next hour", "new cases", "😭 😭", "used to"]
+    ngrams_df = api.get_ngrams_array(ngrams_list=ngrams, lang="en")
+
+
+
+A list of n-grams across several languages
+******************************************
+
+To request a list of n-grams across several languages,
+you can use the ``get_ngrams_tuples()`` method.
+
+**Example code**
+
+.. code:: python
+
+    examples = [
+        ('covid19', 'en'),
+        ('cuarentena', 'es'),
+        ('quarentena', 'pt'),
+        ('فيروس', 'ar'),
+        ('#BTS', 'ko'),
+        ('Brexit', 'fr'),
+        ('virus', 'id'),
+        ('Suriye', 'tr'),
+        ('coronavirus', 'hi'),
+        ('Flüchtling', 'de'),
+        ('Pasqua', 'it'),
+        ('карантин', 'ru'),
+    ]
+    ngrams_array = api.get_ngrams_tuples(examples)
+
+
+Zipf distribution for a given 15-minute batch
+**********************************************
+
+To get the Zipf distribution for a given 15-minute batch,
+please use the ``get_zipf_dist()`` method:
+
+
+**Example code**
+
+.. code:: python
+
+    ngrams_zipf = api.get_zipf_dist(
+      dtime=None,  # datetime(Y, m, d, H, M)
+      lang="en",
+      ngrams='1grams',
+      max_rank=None,
+      min_count=None,
+      rt=True
+    )
+
+
 Citation
 ########
 
-See the following paper for more details, 
+See the following paper for more details,
 and please cite it if you use
 our dataset:
 
-    Alshaabi, T., Adams, J. L., Arnold, M. V., Minot, J. R., Dewhurst, 
-    D. R., Reagan, A. J., Danforth, C. M., & Dodds, P. S. (2020). 
-    `Storywrangler: A massive exploratorium for sociolinguistic, cultural, 
-    socioeconomic, and political timelines using Twitter 
-    <https://arxiv.org/abs/2007.12988>`__. 
-    *arXiv preprint arXiv:2007.12988*.
+    Alshaabi, T., Adams, J. L., Arnold, M. V., Minot, J. R., Dewhurst,
+    D. R., Reagan, A. J., Danforth, C. M., & Dodds, P. S.
+    `Storywrangler: A massive exploratorium for sociolinguistic, cultural,
+    socioeconomic, and political timelines using Twitter
+    <https://arxiv.org/abs/2007.12988>`__.
+    *arXiv preprint* (2021).
 
 
-For more information regarding 
+For more information regarding
 our tweet's language identification and detection framework,
-please see the following paper: 
+please see the following paper:
 
-    Alshaabi, T., Dewhurst, D. R., Minot, J. R., Arnold, M. V., 
-    Adams, J. L., Danforth, C. M., & Dodds, P. S. (2020). 
-    `The growing amplification of social media: 
-    Measuring temporal and social contagion dynamics 
+    Alshaabi, T., Dewhurst, D. R., Minot, J. R., Arnold, M. V.,
+    Adams, J. L., Danforth, C. M., & Dodds, P. S.
+    `The growing amplification of social media:
+    Measuring temporal and social contagion dynamics
     for over 150 languages on Twitter for 2009--2020
-    <https://arxiv.org/abs/2003.03667>`__.
-    *arXiv preprint arXiv:2003.03667*.
+    <https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-021-00271-0>`__.
+    *EPJ Data Science* (2021).
+

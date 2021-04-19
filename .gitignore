@@ -1,4 +1,5 @@
 # Data
+data/
 logs/
 tests/*.pkl
 

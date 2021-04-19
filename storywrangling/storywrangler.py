@@ -25,6 +25,7 @@ from tqdm import tqdm
 from typing import Optional
 from datetime import datetime
 
+import resources
 from storywrangling.query import Query
 from storywrangling.regexr import nparser
 
@@ -47,16 +48,16 @@ class Storywrangler:
         """
         self.database = database
 
-        with pkg_resources.open_binary('data', 'ngrams.bin') as f:
+        with pkg_resources.open_binary(resources, 'ngrams.bin') as f:
             self.parser = pickle.load(f)
 
-        with pkg_resources.open_binary('data', 'ngrams_languages.json') as f:
+        with pkg_resources.open_binary(resources, 'ngrams_languages.json') as f:
             self.ngrams_languages = ujson.load(f)
 
-        with pkg_resources.open_binary('data', 'indexed_languages.json') as f:
+        with pkg_resources.open_binary(resources, 'indexed_languages.json') as f:
             self.indexed_languages = ujson.load(f)
 
-        with pkg_resources.open_binary('data', 'supported_languages.json') as f:
+        with pkg_resources.open_binary(resources, 'supported_languages.json') as f:
             self.supported_languages = ujson.load(f)
 
     def select_database(self, ngrams:  str = '1grams', lang: str = 'en'):
