@@ -103,6 +103,16 @@ class RealtimeQuery:
         }
         return query, self.prepare_data(query, self.cols)
 
+    def prepare_rank_query(self, rank: int) -> (dict, dict):
+        query = {
+            "rank": rank,
+            "time": {
+                "$gte": self.reference_date,
+                "$lte": self.last_updated,
+            }
+        }
+        return query, self.prepare_data(query, self.cols)
+
     def prepare_day_query(self,
                           date: datetime,
                           max_rank: Optional[int] = None,
@@ -138,6 +148,25 @@ class RealtimeQuery:
     def run_query(self, q: dict) -> Cursor:
         query = self.database.find(q)
         return query
+
+    def query_rank(self, rank: int) -> pd.DataFrame:
+        """Query database for rank timeseries
+
+        Args:
+            rank: target rank
+
+        Returns:
+            dataframe of ngrams usage over time
+        """
+        query, data = self.prepare_rank_query(rank)
+
+        df = pd.DataFrame(
+            self.run_query(query),
+        ).rename(columns={"word": "ngram"})
+
+        df = df.set_index('time')[['ngram'] + self.cols]
+
+        return df
 
     def query_ngram(self, word: str) -> pd.DataFrame:
         """Query database for n-gram timeseries
@@ -179,7 +208,7 @@ class RealtimeQuery:
         query, data = self.prepare_ngram_query(word_list)
 
         df = pd.DataFrame(
-            self.run_query(query),
+            self.run_query(query).limit(1).skip(1),
         ).rename(columns={"word": "ngram"})
 
         df = df.groupby(['time', 'ngram']).agg({
