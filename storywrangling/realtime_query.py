@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from typing import Optional, Union
-from datetime import datetime, timedelta
+from datetime import datetime
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.cursor import Cursor
 from pymongo.errors import ServerSelectionTimeoutError

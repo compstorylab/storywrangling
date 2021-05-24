@@ -22,7 +22,7 @@ import pandas as pd
 from tqdm import tqdm
 from typing import Optional
 from datetime import datetime, timedelta
-from pymongo import MongoClient, DESCENDING
+from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 import ujson
