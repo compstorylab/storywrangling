@@ -160,9 +160,12 @@ class RealtimeQuery:
         """
         query, data = self.prepare_rank_query(rank)
 
-        df = pd.DataFrame(
+        df = pd.DataFrame(tqdm(
             self.run_query(query),
-        ).rename(columns={"word": "ngram"})
+            desc="Retrieving ngrams",
+            unit="",
+            total=len(data.keys())
+        )).rename(columns={"word": "ngram"})
 
         df = df.set_index('time')[['ngram'] + self.cols]
 
@@ -208,7 +211,7 @@ class RealtimeQuery:
         query, data = self.prepare_ngram_query(word_list)
 
         df = pd.DataFrame(
-            self.run_query(query).limit(1).skip(1),
+            self.run_query(query),
         ).rename(columns={"word": "ngram"})
 
         df = df.groupby(['time', 'ngram']).agg({

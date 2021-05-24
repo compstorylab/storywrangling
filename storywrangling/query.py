@@ -153,6 +153,16 @@ class Query:
             ).date
         }
 
+    def prepare_rank_query(self, rank: int) -> (dict, dict):
+        query = {
+            "rank": rank,
+            "time": {
+                "$gte": self.reference_date,
+                "$lte": self.last_updated,
+            }
+        }
+        return query, self.prepare_data(query, self.cols)
+
     def prepare_ngram_query(self,
                             word: str,
                             start: Optional[datetime] = None,
@@ -229,6 +239,29 @@ class Query:
 
         else:
             return {"time_2": date if date else self.last_updated}
+
+    def query_rank(self, rank: int) -> pd.DataFrame:
+        """Query database for rank timeseries
+
+        Args:
+            rank: target rank
+
+        Returns:
+            dataframe of ngrams usage over time
+        """
+        query, data = self.prepare_rank_query(rank)
+
+        df = pd.DataFrame(tqdm(
+            self.database.find(query),
+            desc="Retrieving ngrams",
+            unit="",
+            total=len(data.keys())
+        ))
+
+        cols = {"word": "ngram"}
+        cols.update(dict(zip(self.db_cols, self.cols)))
+        df = df.rename(columns=cols).set_index('time')
+        return df[cols.values()]
 
     def query_ngram(self,
                     word,
