@@ -22,7 +22,7 @@ import pandas as pd
 from tqdm import tqdm
 from typing import Optional
 from datetime import datetime, timedelta
-from pymongo import MongoClient, DESCENDING
+from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 import ujson
@@ -153,6 +153,22 @@ class Query:
             ).date
         }
 
+    def prepare_rank_query(
+            self,
+            rank: int,
+            start: Optional[datetime] = None,
+            end: Optional[datetime] = None
+    ) -> (dict, dict):
+
+        query = {
+            "rank": rank,
+            "time": {
+                "$gte": start if start else self.reference_date,
+                "$lte": end if end else self.last_updated,
+            }
+        }
+        return query, self.prepare_data(query, self.cols)
+
     def prepare_ngram_query(self,
                             word: str,
                             start: Optional[datetime] = None,
@@ -229,6 +245,37 @@ class Query:
 
         else:
             return {"time_2": date if date else self.last_updated}
+
+    def query_rank(
+        self,
+        rank: int,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
+    ) -> pd.DataFrame:
+
+        """Query database for rank timeseries
+
+        Args:
+            rank: target rank
+            start_time: starting date for the query
+            end_time: ending date for the query
+
+        Returns:
+            dataframe of ngrams usage over time
+        """
+        query, data = self.prepare_rank_query(rank, start_time, end_time)
+
+        df = pd.DataFrame(tqdm(
+            self.database.find(query),
+            desc="Retrieving ngrams",
+            unit="",
+            total=len(data.keys())
+        ))
+
+        cols = {"word": "ngram"}
+        cols.update(dict(zip(self.db_cols, self.cols)))
+        df = df.rename(columns=cols).set_index('time')
+        return df[cols.values()].sort_index()
 
     def query_ngram(self,
                     word,

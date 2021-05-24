@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from typing import Optional, Union
-from datetime import datetime, timedelta
+from datetime import datetime
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.cursor import Cursor
 from pymongo.errors import ServerSelectionTimeoutError
@@ -103,6 +103,16 @@ class RealtimeQuery:
         }
         return query, self.prepare_data(query, self.cols)
 
+    def prepare_rank_query(self, rank: int) -> (dict, dict):
+        query = {
+            "rank": rank,
+            "time": {
+                "$gte": self.reference_date,
+                "$lte": self.last_updated,
+            }
+        }
+        return query, self.prepare_data(query, self.cols)
+
     def prepare_day_query(self,
                           date: datetime,
                           max_rank: Optional[int] = None,
@@ -138,6 +148,28 @@ class RealtimeQuery:
     def run_query(self, q: dict) -> Cursor:
         query = self.database.find(q)
         return query
+
+    def query_rank(self, rank: int) -> pd.DataFrame:
+        """Query database for rank timeseries
+
+        Args:
+            rank: target rank
+
+        Returns:
+            dataframe of ngrams usage over time
+        """
+        query, data = self.prepare_rank_query(rank)
+
+        df = pd.DataFrame(tqdm(
+            self.run_query(query),
+            desc="Retrieving ngrams",
+            unit="",
+            total=len(data.keys())
+        )).rename(columns={"word": "ngram"})
+
+        df = df.set_index('time')[['ngram'] + self.cols]
+
+        return df.sort_index()
 
     def query_ngram(self, word: str) -> pd.DataFrame:
         """Query database for n-gram timeseries

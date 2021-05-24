@@ -17,6 +17,7 @@ class NgramsTesting(unittest.TestCase):
         self.start = datetime(2010, 1, 1)
         self.end = datetime(2020, 1, 1)
 
+        self.rank_example = 100
         self.lang_example = "en"
         self.ngram_example = "Black Lives Matter"
         self.lang_isindexed_example = "fr"
@@ -86,6 +87,16 @@ class NgramsTesting(unittest.TestCase):
             "unique_2grams_no_rt",
             "unique_3grams_no_rt",
         ]
+
+    def test_get_rank(self):
+        df = self.api.get_rank(
+            self.rank_example,
+            self.lang_example,
+            start_time=self.start,
+            end_time=self.end
+        )
+        logging.info(df)
+        assert not df.empty
 
     def test_get_ngram(self):
         df = self.api.get_ngram(

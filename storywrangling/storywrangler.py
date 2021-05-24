@@ -90,6 +90,39 @@ class Storywrangler:
             logging.info(f"{language} {n}grams are not indexed yet")
             return 1
 
+    def get_rank(
+            self,
+            rank: int,
+            lang: str = 'en',
+            ngram: str = '1grams',
+            start_time: Optional[datetime] = None,
+            end_time: Optional[datetime] = None
+    ) -> pd.DataFrame:
+
+        """Query database for a rank timeseries
+
+        Args:
+            rank: target rank
+            lang: target language (iso code)
+            ngram: target database
+            start_time: starting date for the query
+            end_time: ending date for the query
+
+        Returns:
+            dataframe of ngrams usage over time
+        """
+        if self.supported_languages.get(lang) is not None:
+            logging.info(f"Retrieving {self.supported_languages.get(lang)} {ngram}: Rank [{rank}]")
+
+            q = self.select_database(ngram, lang)
+            df = q.query_rank(rank, start_time=start_time, end_time=end_time)
+            df.index.name = 'time'
+            df.index = pd.to_datetime(df.index)
+            return df
+
+        else:
+            logger.warning(f"Unsupported language: {lang}")
+
     def get_ngram(self,
                   ngram: str,
                   lang: str = 'en',

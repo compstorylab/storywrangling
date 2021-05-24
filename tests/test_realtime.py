@@ -11,22 +11,23 @@ class RealtimeTesting(unittest.TestCase):
         super(RealtimeTesting, self).__init__(*args, **kwargs)
 
         self.api = Realtime()
+        self.rank_example = 100
         self.lang_example = "en"
         self.ngram_example = "😂"
         self.array_example = ["the pandemic", "next hour", "new cases", "😭 😭", "used to"]
         self.multilang_example = [
             ('covid19', 'en'),
             ('cuarentena', 'es'),
-            ('quarentena', 'pt'),
-            ('فيروس', 'ar'),
-            ('#BTS', 'ko'),
-            ('Brexit', 'fr'),
-            ('virus', 'id'),
-            ('Suriye', 'tr'),
-            ('coronavirus', 'hi'),
-            ('Flüchtling', 'de'),
-            ('Pasqua', 'it'),
-            ('карантин', 'ru'),
+            #('quarentena', 'pt'),
+            #('فيروس', 'ar'),
+            #('#BTS', 'ko'),
+            #('Brexit', 'fr'),
+            #('virus', 'id'),
+            #('Suriye', 'tr'),
+            #('coronavirus', 'hi'),
+            #('Flüchtling', 'de'),
+            #('Pasqua', 'it'),
+            #('карантин', 'ru'),
         ]
 
         self.ngrams_cols = [
@@ -38,6 +39,14 @@ class RealtimeTesting(unittest.TestCase):
             "freq_no_rt",
             "r_rel"
         ]
+
+    def test_get_rank(self):
+        df = self.api.get_rank(
+            self.rank_example,
+            self.lang_example,
+        )
+        logging.info(df)
+        assert not df.empty
 
     def test_get_ngram(self):
         df = self.api.get_ngram(
