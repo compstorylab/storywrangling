@@ -169,7 +169,7 @@ class RealtimeQuery:
 
         df = df.set_index('time')[['ngram'] + self.cols]
 
-        return df
+        return df.sort_index()
 
     def query_ngram(self, word: str) -> pd.DataFrame:
         """Query database for n-gram timeseries

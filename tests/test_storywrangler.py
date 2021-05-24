@@ -92,6 +92,8 @@ class NgramsTesting(unittest.TestCase):
         df = self.api.get_rank(
             self.rank_example,
             self.lang_example,
+            start_time=self.start,
+            end_time=self.end
         )
         logging.info(df)
         assert not df.empty

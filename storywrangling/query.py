@@ -153,12 +153,18 @@ class Query:
             ).date
         }
 
-    def prepare_rank_query(self, rank: int) -> (dict, dict):
+    def prepare_rank_query(
+            self,
+            rank: int,
+            start: Optional[datetime] = None,
+            end: Optional[datetime] = None
+    ) -> (dict, dict):
+
         query = {
             "rank": rank,
             "time": {
-                "$gte": self.reference_date,
-                "$lte": self.last_updated,
+                "$gte": start if start else self.reference_date,
+                "$lte": end if end else self.last_updated,
             }
         }
         return query, self.prepare_data(query, self.cols)
@@ -240,16 +246,24 @@ class Query:
         else:
             return {"time_2": date if date else self.last_updated}
 
-    def query_rank(self, rank: int) -> pd.DataFrame:
+    def query_rank(
+        self,
+        rank: int,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
+    ) -> pd.DataFrame:
+
         """Query database for rank timeseries
 
         Args:
             rank: target rank
+            start_time: starting date for the query
+            end_time: ending date for the query
 
         Returns:
             dataframe of ngrams usage over time
         """
-        query, data = self.prepare_rank_query(rank)
+        query, data = self.prepare_rank_query(rank, start_time, end_time)
 
         df = pd.DataFrame(tqdm(
             self.database.find(query),
@@ -261,7 +275,7 @@ class Query:
         cols = {"word": "ngram"}
         cols.update(dict(zip(self.db_cols, self.cols)))
         df = df.rename(columns=cols).set_index('time')
-        return df[cols.values()]
+        return df[cols.values()].sort_index()
 
     def query_ngram(self,
                     word,
