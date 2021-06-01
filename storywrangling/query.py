@@ -1,8 +1,11 @@
 import warnings
+
 warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
+import re
+
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -246,11 +249,27 @@ class Query:
         else:
             return {"time_2": date if date else self.last_updated}
 
+    def prepare_query_filter(self,
+                             ngram_order: int,
+                             query: dict,
+                             filter_name: str):
+
+        filters = {"handles": r"^" + " ".join(["(@\S)"] * ngram_order),
+                   "hashtags": r"^" + " ".join(["(#\S+)"] * ngram_order),
+                   "handles_hashtags": r"^" + " ".join(["([@|#]\S+)"] * ngram_order),
+                   "no_handles_hashtags": r"^" + " ".join(["(?![@|#])"] * ngram_order),
+                   "latin": r"^" + " ".join(["([A-Za-z0-9]+)"] * ngram_order) + "$"
+                   }
+
+        regex_filter = {"word": {"$regex": filters[filter_name]}}
+
+        return {**query, **regex_filter}
+
     def query_rank(
-        self,
-        rank: int,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+            self,
+            rank: int,
+            start_time: Optional[datetime] = None,
+            end_time: Optional[datetime] = None
     ) -> pd.DataFrame:
 
         """Query database for rank timeseries
@@ -372,22 +391,40 @@ class Query:
                   date: datetime,
                   max_rank: Optional[int] = None,
                   min_count: Optional[int] = None,
-                  rt: bool = True):
+                  top_n: Optional[int] = None,
+                  rt: bool = True,
+                  ngram_order: int = 1,
+                  ngram_filter: Optional[str] = None):
+
         """Query database for all ngrams in a single day
 
         Args:
             date: target date
             max_rank: Max rank cutoff
             min_count: min count cutoff
+            top_n: maximum number of ngrams to return
             rt: a toggle to include or exclude RTs
+            ngram_order: n_gram order
+            ngram_filter: name of regex filter for ngrams (handles, hashtags, handles_hashtags, no_handles_hashtags,
+                            or latin)
 
         Returns:
             dataframe of ngrams
         """
+
         query = self.prepare_day_query(date, max_rank, min_count, rt)
+
+        if ngram_filter:
+            query = self.prepare_query_filter(ngram_order, query, ngram_filter)
+
+        if top_n:
+            cur = self.database.aggregate([{'$match': query}, {'$limit': top_n}])
+        else:
+            cur = self.database.find(query)
+
         zipf = {}
         for t in tqdm(
-                self.database.find(query),
+                cur,
                 desc="Retrieving ngrams",
                 unit=""
         ):
