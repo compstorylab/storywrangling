@@ -342,12 +342,14 @@ Language filters
 **************************
 
 Language filters ensure that results for daily Zipf distribution and rank divergence include only specified
-n-gram types. All filters are applied using a Mongo regex operations.
+n-gram types. All filters are applied using Mongo regex operations.
+
+Filters are supported on ``get_zipf_dist()`` and ``get_divergence()`` methods.
 
 For n-grams where $n>1$, the regex is dynamically resized so that every 1-gram in the result must match the query.
-For example ``latin`` 3gram queries will filter through this regex: ``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+) ([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+) ([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``.
+For example ``handles`` 3gram queries will filter through this regex: ``^(@\S+) (@\S+) (@\S+)$``.
 
-Handles and hashtags are not strictly valid Twitter handle or hashtags, but rather handle- and hashtag-like.
+The handle and hashtag filters are not strictly valid Twitter handle or hashtags, but rather handle- and hashtag-like.
 
 
 
@@ -360,6 +362,19 @@ Filter Name                         Description (``<1-gram example>``)
 ``no_handles_hashtags``             exclude handle- and hashtag-like strings (``^(?<![@#])(\b[\S]+)``)
 ``latin``                           include only latin characters w/ hyphens and apostrophes  (``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``)
 ========================            ========================================================================================================
+
+**Example code**
+
+.. code:: python
+
+    ngrams_zipf = storywrangler.get_zipf_dist(
+      date=datetime(2010, 1, 1),
+      lang="en",
+      ngrams="1grams",
+      max_rank=1000,
+      ngram_filter='latin',
+      rt=False
+    )
 
 
 
