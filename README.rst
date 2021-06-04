@@ -302,7 +302,7 @@ Name                    Type      Default
 ``ngrams``              str       "1grams"                target database collection
 ``max_rank``            int       None                    max rank cutoff (optional)
 ``min_count``           int       None                    min count cutoff (optional)
-``top-n``               int       None                    limit results to top N ngrams. applied after query (optional)
+``top_n``               int       None                    limit results to top N ngrams. applied after query (optional)
 ``rt``                  bool      True                    include or exclude RTs (optional)
 ``ngram_filter``        str        None                   perform regex to filter results (optional, see below)
 ==================      ========  ======================  =====================================
@@ -351,6 +351,10 @@ For example ``handles`` 3gram queries will filter through this regex: ``^(@\S+) 
 
 The handle and hashtag filters are not strictly valid Twitter handle or hashtags, but rather handle- and hashtag-like.
 
+Ranks and frequencies are not adjusted to account for the filtered Zipf distributions. I.e., rank and frequency columns
+are calculated off of the original data. Setting ``max_rank`` will yield somewhat arbitrary results; use ``top_n`` to
+select ngrams in the top N of the filtered results.
+
 
 
 ========================            ========================================================================================================
@@ -371,8 +375,9 @@ Filter Name                         Description (``<1-gram example>``)
       date=datetime(2010, 1, 1),
       lang="en",
       ngrams="1grams",
-      max_rank=1000,
+      max_rank=1000, # pull from 1grams ranked in top 1000 of unfiltered data
       ngram_filter='latin',
+      top_n=10, # limit results to top 10 1grams in filtered data
       rt=False
     )
 
