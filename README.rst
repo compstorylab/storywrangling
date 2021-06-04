@@ -292,18 +292,20 @@ To get the Zipf distribution of all
 ngrams in our database for a given language on a single day,
 please use the ``get_zipf_dist()`` method:
 
-==============  ========  ======================  =====================================
-Argument                                          Description
-------------------------------------------------  -------------------------------------
-Name            Type      Default
-==============  ========  ======================  =====================================
-``date``        datetime  required                target date
-``lang``        str       "en"                    target language (iso code)
-``ngrams``      str       "1grams"                target database collection
-``max_rank``    int       None                    max rank cutoff (optional)
-``min_count``   int       None                    min count cutoff (optional)
-``rt``          bool      True                    include or exclude RTs (optional)
-==============  ========  ======================  =====================================
+==================      ========  ======================  =====================================
+Argument                                                  Description
+--------------------------------------------------------  -------------------------------------
+Name                    Type      Default
+==================      ========  ======================  =====================================
+``date``                datetime  required                target date
+``lang``                str       "en"                    target language (iso code)
+``ngrams``              str       "1grams"                target database collection
+``max_rank``            int       None                    max rank cutoff (optional)
+``min_count``           int       None                    min count cutoff (optional)
+``top-n``               int       None                    limit results to top N ngrams. applied after query (optional)
+``rt``                  bool      True                    include or exclude RTs (optional)
+``ngram_filter``        str        None                   perform regex to filter results (optional, see below)
+==================      ========  ======================  =====================================
 
 
 **Example code**
@@ -334,6 +336,30 @@ Argument          Description
 ``rank``          usage tied-rank in all tweets (AT)
 ``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
+
+
+Language filters
+**************************
+
+Language filters ensure that results for daily Zipf distribution and rank divergence include only specified
+n-gram types. All filters are applied using a Mongo regex operations.
+
+For n-grams where $n>1$, the regex is dynamically resized so that every 1-gram in the result must match the query.
+For example ``latin`` 3gram queries will filter through this regex: ``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+) ([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+) ([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``.
+
+Handles and hashtags are not strictly valid Twitter handle or hashtags, but rather handle- and hashtag-like.
+
+
+
+========================            ========================================================================================================
+Filter Name                         Description (``<1-gram example>``)
+========================            ========================================================================================================
+``handles``                         only handle-like strings (``^(@\S+)``)
+``hashtags``                        only hashtag-like strings (``^(#\S+)``)
+``handles_hashtags``                only handle- and hashtag-like strings (``^([@|#]\S+)``)
+``no_handles_hashtags``             exclude handle- and hashtag-like strings (``^(?<![@#])(\b[\S]+)``)
+``latin``                           include only latin characters w/ hyphens and apostrophes  (``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``)
+========================            ========================================================================================================
 
 
 
