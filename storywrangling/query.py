@@ -1,8 +1,11 @@
 import warnings
+
 warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
+import re
+
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -143,6 +146,23 @@ class Query:
             "time_2"
         ]
 
+        # work around for inconsistent field names
+        self.ngram_field_name = {
+            "ngrams": "word",
+            "rtd": "ngram"
+        }
+
+        self.ngram_filters = {
+            "handles": r"(@\S+)",
+            "hashtags": r"(#\S+)",
+            "handles_hashtags": r"([@|#]\S+)",
+            "no_handles_hashtags": "(?![\@\#])([\S]+)",
+            "latin": r"([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)",
+            "no_punc": r"([!…”“\"#@$%&'\(\)\*\+\,\-\.\/\:\;<\=>?@\[\]\^_{|}~]+)"
+        }
+
+        self.exclude_regex = ["no_punc"]  # regexes operating with $not operator
+
     def prepare_data(self, query: dict, cols: list) -> dict:
         return {
             d: {c: np.nan for c in cols}
@@ -246,11 +266,33 @@ class Query:
         else:
             return {"time_2": date if date else self.last_updated}
 
+    def prepare_query_filter(self,
+                             ngram_order: int,
+                             query: dict,
+                             filter_name: str,
+                             db_type: str):
+
+        filters = {"handles": r"^" + r" ".join([r"(@\S+)"] * ngram_order) + r"$",
+                   "hashtags": r"^" + r" ".join([r"(#\S+)"] * ngram_order) + r"$",
+                   "handles_hashtags": r"^" + r" ".join([r"([@|#]\S+)"] * ngram_order) + r"$",
+                   "no_handles_hashtags": r"^" + r" ".join([r"(?![\@\#])([\S]+)"] * ngram_order) + r"$",
+                   "latin": r"^" + r" ".join([r"([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)"] * ngram_order) + "$"
+                   }
+
+        if filter_name in self.exclude_regex:
+            regex_pattern = self.ngram_filters[filter_name]
+            regex_filter = {self.ngram_field_name[db_type]: {"$not": {"$regex": regex_pattern}}}
+        else:
+            regex_pattern = r"^" + " ".join([self.ngram_filters[filter_name]] * ngram_order) + "$"
+            regex_filter = {self.ngram_field_name[db_type]: {"$regex": regex_pattern}}
+
+        return {**query, **regex_filter}
+
     def query_rank(
-        self,
-        rank: int,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+            self,
+            rank: int,
+            start_time: Optional[datetime] = None,
+            end_time: Optional[datetime] = None
     ) -> pd.DataFrame:
 
         """Query database for rank timeseries
@@ -372,22 +414,40 @@ class Query:
                   date: datetime,
                   max_rank: Optional[int] = None,
                   min_count: Optional[int] = None,
-                  rt: bool = True):
+                  top_n: Optional[int] = None,
+                  rt: bool = True,
+                  ngram_order: int = 1,
+                  ngram_filter: Optional[str] = None):
+
         """Query database for all ngrams in a single day
 
         Args:
             date: target date
             max_rank: Max rank cutoff
             min_count: min count cutoff
+            top_n: maximum number of ngrams to return
             rt: a toggle to include or exclude RTs
+            ngram_order: n_gram order
+            ngram_filter: name of regex filter for ngrams (handles, hashtags, handles_hashtags, no_handles_hashtags,
+                            or latin)
 
         Returns:
             dataframe of ngrams
         """
+
         query = self.prepare_day_query(date, max_rank, min_count, rt)
+
+        if ngram_filter:
+            query = self.prepare_query_filter(ngram_order, query, ngram_filter, db_type='ngrams')
+
+        if top_n:
+            cur = self.database.aggregate([{'$match': query}, {'$limit': top_n}])
+        else:
+            cur = self.database.find(query)
+
         zipf = {}
         for t in tqdm(
-                self.database.find(query),
+                cur,
                 desc="Retrieving ngrams",
                 unit=""
         ):
@@ -406,21 +466,38 @@ class Query:
     def query_divergence(self,
                          date: datetime,
                          max_rank: Optional[int] = None,
-                         rt: bool = True) -> pd.DataFrame:
+                         top_n: Optional[int] = None,
+                         rt: bool = True,
+                         ngram_order: int = 1,
+                         ngram_filter: Optional[str] = None
+                         ) -> pd.DataFrame:
         """Query database for a list of narratively dominant ngrams for a given day
 
         Args:
             date: target date
             max_rank: Max rank cutoff
+            top_n: maximum number of ngrams to return
             rt: a toggle to include or exclude RTs
+            ngram_order: n_gram order
+            ngram_filter: name of regex filter for ngrams (handles, hashtags, handles_hashtags, no_handles_hashtags,
+                            or latin)
 
         Returns:
             dataframe of ngrams sroted by their rank div contributions
         """
         query = self.prepare_divergence_query(date, max_rank, rt)
+
+        if ngram_filter:
+            query = self.prepare_query_filter(ngram_order, query, ngram_filter, db_type='rtd')
+
+        if top_n:
+            cur = self.database.aggregate([{'$match': query}, {'$limit': top_n}])
+        else:
+            cur = self.database.find(query)
+
         div = {}
         for t in tqdm(
-                self.database.find(query),
+                cur,
                 desc="Retrieving ngrams",
                 unit=""
         ):

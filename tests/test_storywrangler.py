@@ -1,5 +1,10 @@
 import warnings
+
 warnings.filterwarnings("ignore")
+
+import sys
+
+sys.path.append('./')
 
 import logging
 import unittest
@@ -86,6 +91,15 @@ class NgramsTesting(unittest.TestCase):
             "unique_1grams_no_rt",
             "unique_2grams_no_rt",
             "unique_3grams_no_rt",
+        ]
+
+        self.ngram_filters = [
+            "handles",
+            "hashtags",
+            "handles_hashtags",
+            "no_handles_hashtags",
+            "latin",
+            "no_punc"
         ]
 
     def test_get_rank(self):
@@ -217,6 +231,32 @@ class NgramsTesting(unittest.TestCase):
         logging.info(df)
         assert not df.empty
 
+    def test_get_zipf_dist_filter_1grams(self):
+        for _filter in self.ngram_filters:
+            df = self.api.get_zipf_dist(
+                date=self.end,
+                lang=self.lang_example,
+                ngrams='1grams',
+                ngram_filter=_filter,
+                top_n=100
+            )
+            logging.info(f'Filter set: {_filter}. (1grams)')
+            logging.info(df)
+            assert not df.empty
+
+    def test_get_zipf_dist_filter_3grams(self):
+
+        df = self.api.get_zipf_dist(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='3grams',
+            ngram_filter='latin',
+            top_n=100
+        )
+        logging.info(f'Filter set: latin. (3grams)')
+        logging.info(df)
+        assert not df.empty
+
     def test_get_divergence_1grams(self):
         df = self.api.get_divergence(
             date=self.end,
@@ -234,6 +274,19 @@ class NgramsTesting(unittest.TestCase):
         )
         logging.info(df)
         assert not df.empty
+
+    def test_get_divergence_dist_filter_1grams(self):
+        for _filter in self.ngram_filters:
+            df = self.api.get_divergence(
+                date=self.end,
+                lang=self.lang_example,
+                ngrams='1grams',
+                ngram_filter=_filter,
+                top_n=100
+            )
+            logging.info(f'Filter set: {_filter}. (1grams)')
+            logging.info(df)
+            assert not df.empty
 
 
 if __name__ == '__main__':

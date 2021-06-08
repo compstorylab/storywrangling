@@ -1,8 +1,11 @@
 import warnings
+
 warnings.filterwarnings("ignore")
 
 import sys
 from pathlib import Path
+import re
+
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -28,7 +31,6 @@ from datetime import datetime
 import resources
 from storywrangling.query import Query
 from storywrangling.regexr import nparser
-
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -60,7 +62,7 @@ class Storywrangler:
         with pkg_resources.open_binary(resources, 'supported_languages.json') as f:
             self.supported_languages = ujson.load(f)
 
-    def select_database(self, ngrams:  str = '1grams', lang: str = 'en'):
+    def select_database(self, ngrams: str = '1grams', lang: str = 'en'):
         """Create a custom Query based on the desired database and language collection
         Args:
             ngrams: target ngram collection ("1grams", "2grams", "3grams")
@@ -83,7 +85,7 @@ class Storywrangler:
         Returns:
             number of ngrams to search, based on what is indexed
         """
-        if language in self.indexed_languages[str(n)+'grams']:
+        if language in self.indexed_languages[str(n) + 'grams']:
             logging.info(f"{language} {n}grams are indexed")
             return n
         else:
@@ -266,7 +268,9 @@ class Storywrangler:
                       ngrams: str = '1grams',
                       max_rank: Optional[int] = None,
                       min_count: Optional[int] = None,
-                      rt: bool = True) -> pd.DataFrame:
+                      top_n: Optional[int] = None,
+                      rt: bool = True,
+                      ngram_filter: str = None) -> pd.DataFrame:
         """Query database for ngram Zipf distribution for a given day
 
         Args:
@@ -275,16 +279,28 @@ class Storywrangler:
             ngrams: target ngram collection ("1grams", "2grams", "3grams")
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
+            top_n: maximum number of ngrams to return (default is None)
             rt: a toggle to include or exclude RTs
+            ngram_filter: name of regex filter for ngrams ("handles", "hashtags", "handles_hashtags",
+                            "no_handles_hashtags", or "latin"; default is None)
 
         Returns:
             dataframe of ngrams
         """
+
+        ngram_order = get_ngram_int(ngrams)
+
         if self.ngrams_languages.get(lang) is not None:
             logger.info(f"Retrieving {self.ngrams_languages.get(lang)} {ngrams} for {date.date()} ...")
 
             q = self.select_database(ngrams, lang)
-            df = q.query_day(date, max_rank=max_rank, min_count=min_count, rt=rt)
+            df = q.query_day(date,
+                             max_rank=max_rank,
+                             min_count=min_count,
+                             top_n=top_n,
+                             rt=rt,
+                             ngram_order=ngram_order,
+                             ngram_filter=ngram_filter)
             df.index.name = 'ngram'
             return df
 
@@ -327,7 +343,9 @@ class Storywrangler:
                        lang: str = 'en',
                        ngrams: str = '1grams',
                        max_rank: Optional[int] = None,
-                       rt: bool = True) -> pd.DataFrame:
+                       top_n: Optional[int] = None,
+                       rt: bool = True,
+                       ngram_filter: str = None) -> pd.DataFrame:
         """Get a list of narratively trending ngrams for a given day
 
         Args:
@@ -335,19 +353,34 @@ class Storywrangler:
             lang: target language (iso code)
             ngrams: target ngram collection ("1grams", "2grams")
             max_rank: Max rank cutoff (default is None)
+            top_n: maximum number of ngrams to return (default is None)
             rt: a toggle to include or exclude RTs
+            ngram_filter: name of regex filter for ngrams ("handles", "hashtags", "handles_hashtags",
+                            "no_handles_hashtags", or "latin"; default is None)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
         """
+
         if self.supported_languages.get(lang) is not None:
             logger.info(
                 f"Retrieving {self.supported_languages.get('en')} RTD {ngrams} for {date.date()} ..."
             )
 
             q = Query(f"rd_{ngrams}", 'en')
-            df = q.query_divergence(date, max_rank=max_rank, rt=rt)
+            df = q.query_divergence(date, max_rank=max_rank, rt=rt, top_n=top_n, ngram_filter=ngram_filter)
             df.index.name = 'ngram'
             return df
         else:
             logger.warning(f"Unsupported language: {lang}")
+
+
+def get_ngram_int(collection_string):
+    """Regex for ngram int from string of Mongo collection"""
+    try:
+        ngram_order = int(re.findall(r'\d+', collection_string)[0])
+    except IndexError:
+        logger.warning(f"Could not infer ngram order from collection {collection_string}. Defaulting to n = 1.")
+        ngram_order = 1
+
+    return ngram_order
