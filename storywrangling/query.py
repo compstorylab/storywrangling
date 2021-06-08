@@ -157,8 +157,11 @@ class Query:
             "hashtags": r"(#\S+)",
             "handles_hashtags": r"([@|#]\S+)",
             "no_handles_hashtags": "(?![\@\#])([\S]+)",
-            "latin": r"([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)"
+            "latin": r"([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)",
+            "no_punc": r"([!…”“\"#@$%&'\(\)\*\+\,\-\.\/\:\;<\=>?@\[\]\^_{|}~]+)"
         }
+
+        self.exclude_regex = ["no_punc"]  # regexes operating with $not operator
 
     def prepare_data(self, query: dict, cols: list) -> dict:
         return {
@@ -276,10 +279,12 @@ class Query:
                    "latin": r"^" + r" ".join([r"([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)"] * ngram_order) + "$"
                    }
 
-
-        regex_pattern = r"^" + " ".join([self.ngram_filters[filter_name]] * ngram_order) + "$"
-
-        regex_filter = {self.ngram_field_name[db_type]: {"$regex": regex_pattern}}
+        if filter_name in self.exclude_regex:
+            regex_pattern = self.ngram_filters[filter_name]
+            regex_filter = {self.ngram_field_name[db_type]: {"$not": {"$regex": regex_pattern}}}
+        else:
+            regex_pattern = r"^" + " ".join([self.ngram_filters[filter_name]] * ngram_order) + "$"
+            regex_filter = {self.ngram_field_name[db_type]: {"$regex": regex_pattern}}
 
         return {**query, **regex_filter}
 

@@ -346,6 +346,9 @@ n-gram types. All filters are applied using Mongo regex operations.
 
 Filters are supported on ``get_zipf_dist()`` and ``get_divergence()`` methods.
 
+There are two types of regex queries: inclusionary and exclusionary. Inclusionary matches against the standard Mongo
+``{"$regex":<regex pattern>}`` where as exclusionary excludes the matches using ``{"not":{{"$regex":<regex pattern>}}}``.
+
 For n-grams where $n>1$, the regex is dynamically resized so that every 1-gram in the result must match the query.
 For example ``handles`` 3gram queries will filter through this regex: ``^(@\S+) (@\S+) (@\S+)$``.
 
@@ -357,14 +360,16 @@ select ngrams in the top N of the filtered results.
 
 
 
+
 ========================            ========================================================================================================
 Filter Name                         Description (``<1-gram example>``)
 ========================            ========================================================================================================
-``handles``                         only handle-like strings (``^(@\S+)``)
-``hashtags``                        only hashtag-like strings (``^(#\S+)``)
-``handles_hashtags``                only handle- and hashtag-like strings (``^([@|#]\S+)``)
-``no_handles_hashtags``             exclude handle- and hashtag-like strings (``^(?<![@#])(\b[\S]+)``)
+``handles``                         include only handle-like strings (``^(@\S+)``)
+``hashtags``                        include only hashtag-like strings (``^(#\S+)``)
+``handles_hashtags``                include only handle- and hashtag-like strings (``^([@|#]\S+)``)
+``no_handles_hashtags``             include only strings that do not match handle- and hashtag-like strings (``^(?<![@#])(\b[\S]+)``)
 ``latin``                           include only latin characters w/ hyphens and apostrophes  (``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``)
+``no_punc``                         exclude punctuation (``([!…”“\"#@$%&'\(\)\*\+\,\-\.\/\:\;<\=>?@\[\]\^_{|}~]+)``)
 ========================            ========================================================================================================
 
 **Example code**

@@ -98,7 +98,8 @@ class NgramsTesting(unittest.TestCase):
             "hashtags",
             "handles_hashtags",
             "no_handles_hashtags",
-            "latin"
+            "latin",
+            "no_punc"
         ]
 
     def test_get_rank(self):
