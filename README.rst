@@ -346,11 +346,11 @@ n-gram types. All filters are applied using Mongo regex operations.
 
 Filters are supported on ``get_zipf_dist()`` and ``get_divergence()`` methods.
 
-There are two types of regex queries: inclusionary and exclusionary. Inclusionary matches against the standard Mongo
-``{"$regex":<regex pattern>}`` where as exclusionary excludes the matches using ``{"not":{{"$regex":<regex pattern>}}}``.
+There are two types of regex queries: inclusionary and exclusionary. Inclusionary matches against a standard Mongo
+regex query ``{"$regex":<regex pattern>}`` whereas exclusionary excludes the regex matches using ``{"$not":{{"$regex":<regex pattern>}}}``.
 
-For n-grams where $n>1$, the regex is dynamically resized so that every 1-gram in the result must match the query.
-For example ``handles`` 3gram queries will filter through this regex: ``^(@\S+) (@\S+) (@\S+)$``.
+For the inclusionary queries where n-grams have an order of n>1, the regex is dynamically resized so that every 1-gram in the result must match the query.
+For example ``handles``-filtered 3gram queries will filter through this regex: ``^(@\S+) (@\S+) (@\S+)$``.
 
 The handle and hashtag filters are not strictly valid Twitter handle or hashtags, but rather handle- and hashtag-like.
 
