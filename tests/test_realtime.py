@@ -14,7 +14,7 @@ class RealtimeTesting(unittest.TestCase):
         self.rank_example = 100
         self.lang_example = "en"
         self.ngram_example = "😂"
-        self.array_example = ["the pandemic", "next hour", "new cases", "😭 😭", "used to"]
+        self.array_example = ["pandemic", "COVID19", "cases"]
         self.multilang_example = [
             ('covid19', 'en'),
             ('cuarentena', 'es'),
@@ -39,14 +39,6 @@ class RealtimeTesting(unittest.TestCase):
             "freq_no_rt",
             "r_rel"
         ]
-
-    def test_get_rank(self):
-        df = self.api.get_rank(
-            self.rank_example,
-            self.lang_example,
-        )
-        logging.info(df)
-        assert not df.empty
 
     def test_get_ngram(self):
         df = self.api.get_ngram(
@@ -77,6 +69,26 @@ class RealtimeTesting(unittest.TestCase):
         )
         logging.info(df)
         assert not df.empty
+
+    def test_get_zipf_dist_max_rank(self):
+        df = self.api.get_zipf_dist(
+            lang=self.lang_example,
+            ngrams='1grams',
+            max_rank=10,
+            rt=False,
+        )
+        logging.info(df)
+        assert df['rank_no_rt'].max() <= 10
+
+    def test_get_zipf_dist_min_count_rt(self):
+        df = self.api.get_zipf_dist(
+            lang=self.lang_example,
+            ngrams='1grams',
+            min_count=1000,
+            rt=True,
+        )
+        logging.info(df)
+        assert df['count'].min() >= 1000
 
 
 if __name__ == '__main__':

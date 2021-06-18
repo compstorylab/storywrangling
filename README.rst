@@ -284,59 +284,6 @@ Argument          Description
 ================  =============================================
 
 
-
-Zipf distribution for a given day
-**********************************
-
-To get the Zipf distribution of all
-ngrams in our database for a given language on a single day,
-please use the ``get_zipf_dist()`` method:
-
-==============  ========  ======================  =====================================
-Argument                                          Description
-------------------------------------------------  -------------------------------------
-Name            Type      Default
-==============  ========  ======================  =====================================
-``date``        datetime  required                target date
-``lang``        str       "en"                    target language (iso code)
-``ngrams``      str       "1grams"                target database collection
-``max_rank``    int       None                    max rank cutoff (optional)
-``min_count``   int       None                    min count cutoff (optional)
-``rt``          bool      True                    include or exclude RTs (optional)
-==============  ========  ======================  =====================================
-
-
-**Example code**
-
-.. code:: python
-
-    ngrams_zipf = storywrangler.get_zipf_dist(
-      date=datetime(2010, 1, 1),
-      lang="en",
-      ngrams="1grams",
-      max_rank=1000,
-      rt=False
-    )
-
-
-**Expected output**
-
-A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_example.tsv.gz>`__).
-
-================  =============================================
-Argument          Description
-================  =============================================
-``ngram``         requested ngram
-``count``         usage rate in all tweets (AT)
-``count_no_rt``   usage rate in original tweets (OT)
-``freq``          normalized frequency in all tweets (AT)
-``freq_no_rt``    normalized frequency in original tweets (OT)
-``rank``          usage tied-rank in all tweets (AT)
-``rank_no_rt``    usage tied-rank in original tweets (OT)
-================  =============================================
-
-
-
 Language usage over time
 **************************
 
@@ -397,6 +344,57 @@ Argument                  Description
 ========================  ===================================================
 
 
+Zipf distribution for a given day
+**********************************
+
+To get the Zipf distribution of all
+ngrams in our database for a given language on a single day,
+please use the ``get_zipf_dist()`` method:
+
+==============  ========  ======================  =====================================
+Argument                                          Description
+------------------------------------------------  -------------------------------------
+Name            Type      Default
+==============  ========  ======================  =====================================
+``date``        datetime  required                target date
+``lang``        str       "en"                    target language (iso code)
+``ngrams``      str       "1grams"                target database collection
+``max_rank``    int       None                    max rank cutoff (optional)
+``min_count``   int       None                    min count cutoff (optional)
+``rt``          bool      True                    apply filters on ATs or OTs (w/out RTs)
+==============  ========  ======================  =====================================
+
+
+**Example code**
+
+.. code:: python
+
+    ngrams_zipf = storywrangler.get_zipf_dist(
+      date=datetime(2010, 1, 1),
+      lang="en",
+      ngrams="1grams",
+      max_rank=1000,
+      rt=False
+    )
+
+
+**Expected output**
+
+A single Pandas dataframe (see `ngrams_zipf_example.tsv <tests/ngrams_zipf_example.tsv.gz>`__).
+
+================  =============================================
+Argument          Description
+================  =============================================
+``ngram``         requested ngram
+``count``         usage rate in all tweets (AT)
+``count_no_rt``   usage rate in original tweets (OT)
+``freq``          normalized frequency in all tweets (AT)
+``freq_no_rt``    normalized frequency in original tweets (OT)
+``rank``          usage tied-rank in all tweets (AT)
+``rank_no_rt``    usage tied-rank in original tweets (OT)
+================  =============================================
+
+
 
 Narratively trending ngrams
 **********************************
@@ -417,7 +415,7 @@ Name            Type      Default
 ``lang``        str       "en"                    target language (iso code)
 ``ngrams``      str       "1grams"                target database collection
 ``max_rank``    int       None                    max rank cutoff (optional)
-``rt``          bool      True                    include or exclude RTs (optional)
+``rt``          bool      True                    apply filters on ATs or OTs (w/out RTs)
 ==============  ========  ======================  =====================================
 
 
@@ -464,11 +462,7 @@ Realtime Database
 
 In addition to our historical daily ngrams database,
 we provide a 15-min resolution data stream
-
-- `Time window`: Last 30 days
-- `Time resolution`: 15-minute stream of unigrams and bigrams
-- `Languages`: Top 12 languages on Twitter
-
+for the past 30 days
 
 +------------+-------+------------+-------+------------+-------+
 | Language   |  ISO  | Language   |  ISO  | Language   |  ISO  |
@@ -477,11 +471,6 @@ we provide a 15-min resolution data stream
 +------------+-------+------------+-------+------------+-------+
 | Arabic     | `ar`  | Korean     |  `ko` | French     | `fr`  |
 +------------+-------+------------+-------+------------+-------+
-| Indonesian | `id`  | Turkish    |  `tr` | Hindi      | `hi`  |
-+------------+-------+------------+-------+------------+-------+
-| German     | `de`  | Italian    |  `it` | Russian    | `ru`  |
-+------------+-------+------------+-------+------------+-------+
-
 
 
 Getting started
