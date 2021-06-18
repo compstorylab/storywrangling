@@ -351,18 +351,20 @@ To get the Zipf distribution of all
 ngrams in our database for a given language on a single day,
 please use the ``get_zipf_dist()`` method:
 
-==============  ========  ======================  =====================================
-Argument                                          Description
-------------------------------------------------  -------------------------------------
-Name            Type      Default
-==============  ========  ======================  =====================================
-``date``        datetime  required                target date
-``lang``        str       "en"                    target language (iso code)
-``ngrams``      str       "1grams"                target database collection
-``max_rank``    int       None                    max rank cutoff (optional)
-``min_count``   int       None                    min count cutoff (optional)
-``rt``          bool      True                    apply filters on ATs or OTs (w/out RTs)
-==============  ========  ======================  =====================================
+==================      ========  ======================  =====================================
+Argument                                                  Description
+--------------------------------------------------------  -------------------------------------
+Name                    Type      Default
+==================      ========  ======================  =====================================
+``date``                datetime  required                target date
+``lang``                str       "en"                    target language (iso code)
+``ngrams``              str       "1grams"                target database collection
+``max_rank``            int       None                    max rank cutoff (optional)
+``min_count``           int       None                    min count cutoff (optional)
+``top_n``               int       None                    limit results to top N ngrams. applied after query (optional)
+``rt``                  bool      True                    apply filters on ATs or OTs (w/out RTs)
+``ngram_filter``        str        None                   perform regex to filter results (optional, see below)
+==================      ========  ======================  =====================================
 
 
 **Example code**
@@ -393,7 +395,6 @@ Argument          Description
 ``rank``          usage tied-rank in all tweets (AT)
 ``rank_no_rt``    usage tied-rank in original tweets (OT)
 ================  =============================================
-
 
 
 Narratively trending ngrams
@@ -453,6 +454,62 @@ Argument                        Description
 ``rank_change``                 new rank relative to trending ngrams in all tweets (AT)
 ``rank_change_no_rt``           new rank relative to trending ngrams in original tweets (OT)
 ==============================  ================================================================
+
+
+Language filters
+**************************
+
+Language filters ensure that results for daily Zipf distribution
+and rank divergence include only specified n-gram types.
+All filters are applied using Mongo regex operations.
+
+Filters are supported on ``get_zipf_dist()`` and ``get_divergence()`` methods.
+
+There are two types of regex queries: inclusionary and exclusionary.
+Inclusionary matches against a standard Mongo
+regex query ``{"$regex":<regex pattern>}``
+whereas exclusionary excludes the regex matches using
+``{"$not":{{"$regex":<regex pattern>}}}``.
+
+For the inclusionary queries where n-grams have an order of n>1,
+the regex is dynamically resized so that every 1-gram in the result must match the query.
+For example ``handles``-filtered 3gram queries will filter through this regex:
+``^(@\S+) (@\S+) (@\S+)$``.
+
+The handle and hashtag filters are not strictly valid Twitter handle or hashtags,
+but rather handle- and hashtag-like.
+
+Ranks and frequencies are not adjusted to account for the filtered Zipf distributions.
+I.e., rank and frequency columns
+are calculated off of the original data. Setting ``max_rank``
+will yield somewhat arbitrary results; use ``top_n`` to
+select ngrams in the top N of the filtered results.
+
+
+========================            ========================================================================================================
+Filter Name                         Description (``<1-gram example>``)
+========================            ========================================================================================================
+``handles``                         include only handle-like strings (``^(@\S+)``)
+``hashtags``                        include only hashtag-like strings (``^(#\S+)``)
+``handles_hashtags``                include only handle- and hashtag-like strings (``^([@|#]\S+)``)
+``no_handles_hashtags``             include only strings that do not match handle- and hashtag-like strings (``^(?<![@#])(\b[\S]+)``)
+``latin``                           include only latin characters w/ hyphens and apostrophes  (``^([A-Za-z0-9]+[\‘\’\'\-]?[A-Za-z0-9]+)$``)
+``no_punc``                         exclude punctuation (``([!…”“\"#@$%&'\(\)\*\+\,\-\.\/\:\;<\=>?@\[\]\^_{|}~]+)``)
+========================            ========================================================================================================
+
+**Example code**
+
+.. code:: python
+
+    ngrams_zipf = storywrangler.get_zipf_dist(
+      date=datetime(2010, 1, 1),
+      lang="en",
+      ngrams="1grams",
+      max_rank=1000, # pull from 1grams ranked in top 1000 of unfiltered data
+      ngram_filter='latin',
+      top_n=10, # limit results to top 10 1grams in filtered data
+      rt=False
+    )
 
 
 
@@ -578,7 +635,7 @@ our dataset:
     `Storywrangler: A massive exploratorium for sociolinguistic, cultural,
     socioeconomic, and political timelines using Twitter
     <https://arxiv.org/abs/2007.12988>`__.
-    *arXiv preprint* (2021).
+    *Science Advances* (2021).
 
 
 For more information regarding
