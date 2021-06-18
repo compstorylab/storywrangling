@@ -19,6 +19,9 @@ class NgramsTesting(unittest.TestCase):
 
         self.rank_example = 100
         self.lang_example = "en"
+        self.test_1gram = "haha"
+        self.test_2gram = "this is"
+        self.test_3gram = "!!!"
         self.ngram_example = "Black Lives Matter"
         self.lang_isindexed_example = "fr"
         self.ngram_isindexed_example = "bonjour mon ami"
@@ -87,6 +90,30 @@ class NgramsTesting(unittest.TestCase):
             "unique_2grams_no_rt",
             "unique_3grams_no_rt",
         ]
+
+    def test_1grams_database(self):
+        df = self.api.get_ngram(
+            self.test_1gram,
+            self.lang_example,
+        )
+        logging.info(df)
+        assert not df.empty
+
+    def test_2grams_database(self):
+        df = self.api.get_ngram(
+            self.test_2gram,
+            self.lang_example,
+        )
+        logging.info(df)
+        assert not df.empty
+
+    def test_3grams_database(self):
+        df = self.api.get_ngram(
+            self.test_3gram,
+            self.lang_example,
+        )
+        logging.info(df)
+        assert not df.empty
 
     def test_get_rank(self):
         df = self.api.get_rank(
@@ -217,6 +244,28 @@ class NgramsTesting(unittest.TestCase):
         logging.info(df)
         assert not df.empty
 
+    def test_get_zipf_dist_max_rank(self):
+        df = self.api.get_zipf_dist(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+            max_rank=10,
+            rt=False,
+        )
+        logging.info(df)
+        assert df['rank_no_rt'].max() <= 10
+
+    def test_get_zipf_dist_min_count_rt(self):
+        df = self.api.get_zipf_dist(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+            min_count=10**6,
+            rt=True,
+        )
+        logging.info(df)
+        assert df['count'].min() >= 10**6
+
     def test_get_divergence_1grams(self):
         df = self.api.get_divergence(
             date=self.end,
@@ -234,6 +283,17 @@ class NgramsTesting(unittest.TestCase):
         )
         logging.info(df)
         assert not df.empty
+
+    def test_get_divergence_max_rank(self):
+        df = self.api.get_divergence(
+            date=self.end,
+            lang=self.lang_example,
+            ngrams='1grams',
+            max_rank=10,
+            rt=False,
+        )
+        logging.info(df)
+        assert df['rank_change_no_rt'].max() <= 10
 
 
 if __name__ == '__main__':

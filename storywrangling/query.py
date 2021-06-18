@@ -1,3 +1,4 @@
+import logging
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -20,10 +21,10 @@ except ImportError:
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime, timedelta
-from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
+from pymongo import MongoClient, ASCENDING, DESCENDING
 
 import ujson
 import resources
@@ -69,9 +70,18 @@ class Query:
         db = client[db]
         self.database = db[lang]
         self.lang = lang
-        self.lag = timedelta(days=2)
-        self.reference_date = datetime(2010, 1, 1)
-        self.last_updated = datetime.today() - self.lag
+
+        try:
+            self.reference_date = list(self.database.find().sort([('time', ASCENDING)]).limit(1))[0]['time']
+            self.last_updated = list(self.database.find().sort([('time', DESCENDING)]).limit(1))[0]['time']
+        except KeyError:
+            try:
+                self.reference_date = list(self.database.find().sort([('time_2', ASCENDING)]).limit(1))[0]['time_2']
+                self.last_updated = list(self.database.find().sort([('time_2', DESCENDING)]).limit(1))[0]['time_2']
+            except KeyError:
+                self.lag = timedelta(days=2)
+                self.reference_date = datetime(2010, 1, 1)
+                self.last_updated = datetime.today() - self.lag
 
         self.db_cols = [
             "counts",
@@ -170,7 +180,7 @@ class Query:
         return query, self.prepare_data(query, self.cols)
 
     def prepare_ngram_query(self,
-                            word: str,
+                            word: Union[str, list],
                             start: Optional[datetime] = None,
                             end: Optional[datetime] = None) -> (dict, dict):
         query = {
@@ -209,19 +219,19 @@ class Query:
             else:
                 return {
                     "time": date if date else self.last_updated,
-                    "rank_no_rt": {"$lte": max_rank}
+                    "rank_noRT": {"$lte": max_rank}
                 }
 
         elif min_count:
             if rt:
                 return {
                     "time": date if date else self.last_updated,
-                    "count": {"$gte": min_count}
+                    "counts": {"$gte": min_count}
                 }
             else:
                 return {
                     "time": date if date else self.last_updated,
-                    "count_no_rt": {"$gte": min_count}
+                    "count_noRT": {"$gte": min_count}
                 }
 
         else:
@@ -275,7 +285,8 @@ class Query:
         cols = {"word": "ngram"}
         cols.update(dict(zip(self.db_cols, self.cols)))
         df = df.rename(columns=cols).set_index('time')
-        return df[cols.values()].sort_index()
+        df = df[cols.values()].sort_index().drop_duplicates()
+        return df.asfreq('D')
 
     def query_ngram(self,
                     word,
@@ -296,7 +307,10 @@ class Query:
         for i in self.database.find(query):
             d = i["time"].date()
             for c, db in zip(self.cols, self.db_cols):
-                data[d][c] = i[db]
+                try:
+                    data[d][c] = i[db]
+                except KeyError:
+                    logging.error(f'Database field names have changed for {d}')
 
         df = pd.DataFrame.from_dict(data=data, orient="index")
         return df
@@ -379,12 +393,13 @@ class Query:
             date: target date
             max_rank: Max rank cutoff
             min_count: min count cutoff
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns:
             dataframe of ngrams
         """
         query = self.prepare_day_query(date, max_rank, min_count, rt)
+
         zipf = {}
         for t in tqdm(
                 self.database.find(query),
@@ -393,7 +408,10 @@ class Query:
         ):
             zipf[t["word"]] = {}
             for c, db in zip(self.cols, self.db_cols):
-                zipf[t["word"]][c] = t[db]
+                try:
+                    zipf[t["word"]][c] = t[db]
+                except KeyError:
+                    logging.error('Database field names have changed!!')
 
         df = pd.DataFrame.from_dict(data=zipf, orient="index")
         if rt:
@@ -412,7 +430,7 @@ class Query:
         Args:
             date: target date
             max_rank: Max rank cutoff
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns:
             dataframe of ngrams sroted by their rank div contributions
@@ -426,7 +444,10 @@ class Query:
         ):
             div[t["ngram"]] = {}
             for c, db in zip(self.div_cols, self.db_div_cols):
-                div[t["ngram"]][c] = t[db]
+                try:
+                    div[t["ngram"]][c] = t[db]
+                except KeyError:
+                    logging.error('Database field names have changed!!')
 
         df = pd.DataFrame.from_dict(data=div, orient="index")
         if rt:

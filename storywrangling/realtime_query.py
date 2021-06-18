@@ -149,28 +149,6 @@ class RealtimeQuery:
         query = self.database.find(q)
         return query
 
-    def query_rank(self, rank: int) -> pd.DataFrame:
-        """Query database for rank timeseries
-
-        Args:
-            rank: target rank
-
-        Returns:
-            dataframe of ngrams usage over time
-        """
-        query, data = self.prepare_rank_query(rank)
-
-        df = pd.DataFrame(tqdm(
-            self.run_query(query),
-            desc="Retrieving ngrams",
-            unit="",
-            total=len(data.keys())
-        )).rename(columns={"word": "ngram"})
-
-        df = df.set_index('time')[['ngram'] + self.cols]
-
-        return df.sort_index()
-
     def query_ngram(self, word: str) -> pd.DataFrame:
         """Query database for n-gram timeseries
 
@@ -241,7 +219,7 @@ class RealtimeQuery:
             dtime: target datetime
             max_rank: Max rank cutoff
             min_count: min count cutoff
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns:
             dataframe of ngrams
