@@ -49,29 +49,6 @@ class Realtime:
         with pkg_resources.open_binary(resources, 'realtime_languages.json') as f:
             self.supported_languages = ujson.load(f)
 
-    def get_rank(self, rank: int, lang: str = 'en', ngram: str = '1grams') -> pd.DataFrame:
-        """Query database for a rank timeseries
-
-        Args:
-            rank: target rank
-            lang: target language (iso code)
-            ngram: target database
-
-        Returns:
-            dataframe of ngrams usage over time
-        """
-        if self.supported_languages.get(lang) is not None:
-            logging.info(f"Retrieving {self.supported_languages.get(lang)} {ngram}: Rank [{rank}]")
-
-            q = RealtimeQuery(f'realtime_{ngram}', lang)
-            df = q.query_rank(rank)
-            df.index.name = 'time'
-            df.index = pd.to_datetime(df.index)
-            return df
-
-        else:
-            logger.warning(f"Unsupported language: {lang}")
-
     def get_ngram(self, ngram: str, lang: str = 'en') -> pd.DataFrame:
         """Query database for an ngram timeseries
 
@@ -169,7 +146,7 @@ class Realtime:
             ngrams: target ngram collection ("1grams", "2grams")
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns:
             dataframe of ngrams

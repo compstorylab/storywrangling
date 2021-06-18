@@ -275,7 +275,7 @@ class Storywrangler:
             ngrams: target ngram collection ("1grams", "2grams", "3grams")
             max_rank: Max rank cutoff (default is None)
             min_count: min count cutoff (default is None)
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns:
             dataframe of ngrams
@@ -335,7 +335,7 @@ class Storywrangler:
             lang: target language (iso code)
             ngrams: target ngram collection ("1grams", "2grams")
             max_rank: Max rank cutoff (default is None)
-            rt: a toggle to include or exclude RTs
+            rt: a toggle to apply the filters above on ATs or OTs (w/out RTs)
 
         Returns (pd.DataFrame):
             dataframe of ngrams
