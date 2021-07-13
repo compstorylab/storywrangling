@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="storywrangling",
-    version="0.2.2",
+    version="0.2.5",
     description="Python API for the Storywrangler project",
     long_description=long_description,
     long_description_content_type="text/x-rst",
