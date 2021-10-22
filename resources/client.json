@@ -1,6 +1,6 @@
 {
   "database": "mongodb",
-  "domain": "wranglerdb01a.uvm.edu,
+  "domain": "wranglerdb01a.uvm.edu",
   "username": "guest",
   "pwd": "roboctopus",
   "port": "27017"
