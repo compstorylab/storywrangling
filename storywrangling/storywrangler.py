@@ -371,7 +371,7 @@ class Storywrangler:
                 f"Retrieving {self.supported_languages.get('en')} RTD {ngrams} for {date.date()} ..."
             )
 
-            q = Query(f"rd_{ngrams}", 'en')
+            q = Query(f"rd_{ngrams}", lang)
             df = q.query_divergence(
                 date,
                 max_rank=max_rank,
@@ -383,6 +383,28 @@ class Storywrangler:
             return df
         else:
             logger.warning(f"Unsupported language: {lang}")
+
+
+    def get_rd_timeseries(self,
+                      dates: tuple,
+                      lang: str = 'en',
+                      ngrams: str = '1grams',
+                      rt: bool = True) -> pd.DataFrame:
+        if self.supported_languages.get(lang) is not None:
+            logger.info(
+                f"Retrieving {self.supported_languages.get('en')} RTD {ngrams} from {dates[0].date()} to {dates[1].date()} ..."
+            )
+
+            q = Query(f"rd_{ngrams}", lang)
+            df = q.query_rd_timeseries(
+                dates,
+                rt=rt,
+            )
+            df.index.name = 'ngram'
+            return df
+        else:
+            logger.warning(f"Unsupported language: {lang}")
+
 
 
 def get_ngram_int(collection_string):

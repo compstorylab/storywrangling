@@ -273,6 +273,18 @@ class Query:
         else:
             return {"time_2": date if date else self.last_updated}
 
+    def prepare_rd_timeseries_query(self,
+                                    dates: tuple,
+                                    rt: bool = True) -> dict:
+        if rt:
+            return {"time_2": {"$gte": dates[0], "$lte": dates[1]},
+                    "rank_change": {"$lte": 1, "$gt": 0}
+                    }
+        else:
+            return {"time_2": {"$gte": dates[0], "$lte": dates[1]},
+                    "rank_change_noRT": {"$lte": 1, "$gt": 0}
+                    }
+
     def prepare_query_filter(self,
                              ngram_order: int,
                              query: dict,
@@ -521,4 +533,36 @@ class Query:
         else:
             df.sort_values(by='rd_contribution_no_rt', ascending=False, inplace=True)
 
+        return df
+
+    def query_rd_timeseries(self,
+                            dates: tuple,
+                            rt: bool = True,
+                            ) -> pd.DataFrame:
+        """ Query database for a list of top ngrams over a daterange
+
+        Args:
+            dates: a tuple of datetimes for start and end dates
+            rt: a toggle to search ATs or OTs
+
+        Returns:
+            dataframe of ngrams with a DatetimeIndex
+        """
+        query = self.prepare_rd_timeseries_query(dates, rt)
+        cur = self.database.find(query)
+
+        div = {}
+        for t in tqdm(
+                cur,
+                desc="Retrieving ngrams",
+                unit=""
+        ):
+            div[t["ngram"]] = {}
+            for c, db in zip(self.div_cols, self.db_div_cols):
+                try:
+                    div[t["ngram"]][c] = t[db]
+                except KeyError:
+                    logging.error('Database field names have changed!!')
+
+        df = pd.DataFrame.from_dict(data=div, orient="index")
         return df
