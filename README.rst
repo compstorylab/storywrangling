@@ -108,6 +108,8 @@ The ``Storywrangler()`` class provides a set of methods
 to access our database.
 We outline some of the main methods below.
 
+Please ensure you are connected to the UVM VPN to bypass the university firewall.
+
 
 A single ngram timeseries
 ***************************
